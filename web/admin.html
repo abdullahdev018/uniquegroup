@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard — Unique Properties</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon/favicon-16x16.png" />
+  <link rel="shortcut icon" href="assets/favicon/favicon.ico" />
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/favicon/apple-touch-icon.png" />
+  <link rel="manifest" href="assets/favicon/site.webmanifest" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+
+<div class="admin-layout">
+
+  <!-- Sidebar -->
+  <aside class="admin-sidebar">
+    <div class="brand"><img class="brand-mark" src="assets/favicon/android-chrome-192x192.png" alt="Unique Properties logo" /><span>Unique Properties</span></div>
+    <ul class="admin-nav">
+      <li><a href="#" class="active" data-admin-link="dashboard"><i class="fa-solid fa-gauge-high"></i> Dashboard</a></li>
+      <li><a href="#" data-admin-link="properties"><i class="fa-solid fa-building"></i> Properties</a></li>
+      <li><a href="#" data-admin-link="add"><i class="fa-solid fa-plus"></i> Add Property</a></li>
+      <li><a href="#" data-admin-link="inquiries"><i class="fa-solid fa-envelope-open-text"></i> Inquiries</a></li>
+      <li style="margin-top:1.5rem;"><a href="index.html"><i class="fa-solid fa-right-from-bracket"></i> Logout</a></li>
+    </ul>
+  </aside>
+
+  <!-- Main -->
+  <main class="admin-main">
+    <div class="admin-header">
+      <div>
+        <h1>Welcome back, Admin</h1>
+        <div style="color:var(--muted);font-size:.92rem;">Here's what's happening today.</div>
+      </div>
+      <a class="btn btn-navy" data-admin-link="add" href="#"><i class="fa-solid fa-plus"></i> Add Property</a>
+    </div>
+
+    <!-- Dashboard panel -->
+    <div data-admin-panel="dashboard">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon"><i class="fa-solid fa-building"></i></div>
+          <div>
+            <div class="stat-value">128</div>
+            <div class="stat-label">Total Properties</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon"><i class="fa-solid fa-envelope"></i></div>
+          <div>
+            <div class="stat-value">47</div>
+            <div class="stat-label">Total Inquiries</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon"><i class="fa-solid fa-circle-check"></i></div>
+          <div>
+            <div class="stat-value">96</div>
+            <div class="stat-label">Active Listings</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon"><i class="fa-solid fa-eye"></i></div>
+          <div>
+            <div class="stat-value">12.4k</div>
+            <div class="stat-label">Page Views (30d)</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="admin-panel">
+        <h2>Recent Inquiries</h2>
+        <p style="color:var(--muted);margin-bottom:1rem;">Latest inquiries received this week.</p>
+        <table style="width:100%;border-collapse:collapse;font-size:.93rem;">
+          <thead>
+            <tr style="text-align:left;border-bottom:1px solid var(--border);color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-size:.78rem;">
+              <th style="padding:.8rem .4rem;">Name</th>
+              <th style="padding:.8rem .4rem;">Phone</th>
+              <th style="padding:.8rem .4rem;">Property</th>
+              <th style="padding:.8rem .4rem;">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom:1px solid var(--border);">
+              <td style="padding:.8rem .4rem;">Ali Raza</td>
+              <td style="padding:.8rem .4rem;">+92 300 1112233</td>
+              <td style="padding:.8rem .4rem;">Modern 1 Kanal Villa</td>
+              <td style="padding:.8rem .4rem;"><span style="background:rgba(201,162,39,.15);color:var(--gold);padding:.25rem .6rem;border-radius:999px;font-size:.78rem;font-weight:600;">New</span></td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--border);">
+              <td style="padding:.8rem .4rem;">Fatima Hassan</td>
+              <td style="padding:.8rem .4rem;">+44 7700 900123</td>
+              <td style="padding:.8rem .4rem;">Sky Garden Penthouse</td>
+              <td style="padding:.8rem .4rem;"><span style="background:rgba(37,211,102,.15);color:#25D366;padding:.25rem .6rem;border-radius:999px;font-size:.78rem;font-weight:600;">Contacted</span></td>
+            </tr>
+            <tr>
+              <td style="padding:.8rem .4rem;">Bilal Ahmed</td>
+              <td style="padding:.8rem .4rem;">+92 321 4445566</td>
+              <td style="padding:.8rem .4rem;">Corner 5 Marla Plot</td>
+              <td style="padding:.8rem .4rem;"><span style="background:rgba(15,23,42,.08);color:var(--navy);padding:.25rem .6rem;border-radius:999px;font-size:.78rem;font-weight:600;">Closed</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Properties panel -->
+    <div data-admin-panel="properties" style="display:none;">
+      <div class="admin-panel">
+        <h2>All Properties</h2>
+        <p style="color:var(--muted);margin-bottom:1rem;">Manage your listings here. (Demo data)</p>
+        <div class="property-grid" style="grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));">
+          <article class="property-card">
+            <div class="property-img-wrap">
+              <img src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=600&q=80" alt="Property" loading="lazy" />
+            </div>
+            <div class="property-body">
+              <div class="property-price">PKR 6.5 Cr</div>
+              <h3 class="property-title">Modern 1 Kanal Villa</h3>
+              <div class="property-actions">
+                <a class="btn btn-navy" href="#"><i class="fa-solid fa-pen"></i> Edit</a>
+                <a class="btn btn-gold" href="#"><i class="fa-solid fa-trash"></i> Delete</a>
+              </div>
+            </div>
+          </article>
+          <article class="property-card">
+            <div class="property-img-wrap">
+              <img src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=600&q=80" alt="Property" loading="lazy" />
+            </div>
+            <div class="property-body">
+              <div class="property-price">PKR 4.2 Cr</div>
+              <h3 class="property-title">Elegant 10 Marla Home</h3>
+              <div class="property-actions">
+                <a class="btn btn-navy" href="#"><i class="fa-solid fa-pen"></i> Edit</a>
+                <a class="btn btn-gold" href="#"><i class="fa-solid fa-trash"></i> Delete</a>
+              </div>
+            </div>
+          </article>
+          <article class="property-card">
+            <div class="property-img-wrap">
+              <img src="https://images.unsplash.com/photo-1486325212027-8081e485255e?auto=format&fit=crop&w=600&q=80" alt="Property" loading="lazy" />
+            </div>
+            <div class="property-body">
+              <div class="property-price">PKR 12 Cr</div>
+              <h3 class="property-title">Prime Commercial Plaza</h3>
+              <div class="property-actions">
+                <a class="btn btn-navy" href="#"><i class="fa-solid fa-pen"></i> Edit</a>
+                <a class="btn btn-gold" href="#"><i class="fa-solid fa-trash"></i> Delete</a>
+              </div>
+            </div>
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add Property panel -->
+    <div data-admin-panel="add" style="display:none;">
+      <div class="admin-panel">
+        <h2>Add New Property</h2>
+        <p style="color:var(--muted);margin-bottom:1.5rem;">Fill the details below to publish a new listing.</p>
+        <form class="form-grid" data-mock data-success="Property added successfully.">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+            <div class="form-field">
+              <label>Title</label>
+              <input type="text" name="title" required placeholder="Modern 1 Kanal Villa" />
+            </div>
+            <div class="form-field">
+              <label>Price (PKR)</label>
+              <input type="number" name="price" required placeholder="65000000" />
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+            <div class="form-field">
+              <label>Location / Block</label>
+              <input type="text" name="location" required placeholder="Tulip Block, Park View Lahore" />
+            </div>
+            <div class="form-field">
+              <label>Property Type</label>
+              <select name="type">
+                <option>Villa</option>
+                <option>House</option>
+                <option>Apartment</option>
+                <option>Plot</option>
+                <option>Commercial</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-field">
+            <label>Description</label>
+            <textarea name="description" placeholder="Describe the property highlights..."></textarea>
+          </div>
+          <div class="form-field">
+            <label>Images</label>
+            <input type="file" name="images" multiple accept="image/*" />
+          </div>
+          <div style="display:flex;gap:.6rem;">
+            <button type="submit" class="btn btn-navy"><i class="fa-solid fa-cloud-arrow-up"></i> Publish</button>
+            <button type="reset" class="btn btn-ghost" style="background:var(--soft);color:var(--text);border-color:var(--border);"><i class="fa-solid fa-rotate"></i> Reset</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Inquiries panel -->
+    <div data-admin-panel="inquiries" style="display:none;">
+      <div class="admin-panel">
+        <h2>All Inquiries</h2>
+        <p style="color:var(--muted);margin-bottom:1rem;">Recent inquiries from your website.</p>
+        <table style="width:100%;border-collapse:collapse;font-size:.93rem;">
+          <thead>
+            <tr style="text-align:left;border-bottom:1px solid var(--border);color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-size:.78rem;">
+              <th style="padding:.8rem .4rem;">Name</th>
+              <th style="padding:.8rem .4rem;">Email</th>
+              <th style="padding:.8rem .4rem;">Phone</th>
+              <th style="padding:.8rem .4rem;">Interest</th>
+              <th style="padding:.8rem .4rem;">Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom:1px solid var(--border);"><td style="padding:.8rem .4rem;">Ali Raza</td><td style="padding:.8rem .4rem;">ali@example.com</td><td style="padding:.8rem .4rem;">+92 300 1112233</td><td style="padding:.8rem .4rem;">Buy</td><td style="padding:.8rem .4rem;">Today</td></tr>
+            <tr style="border-bottom:1px solid var(--border);"><td style="padding:.8rem .4rem;">Fatima Hassan</td><td style="padding:.8rem .4rem;">fatima@example.com</td><td style="padding:.8rem .4rem;">+44 7700 900123</td><td style="padding:.8rem .4rem;">Invest</td><td style="padding:.8rem .4rem;">Yesterday</td></tr>
+            <tr style="border-bottom:1px solid var(--border);"><td style="padding:.8rem .4rem;">Bilal Ahmed</td><td style="padding:.8rem .4rem;">bilal@example.com</td><td style="padding:.8rem .4rem;">+92 321 4445566</td><td style="padding:.8rem .4rem;">Buy</td><td style="padding:.8rem .4rem;">2 days ago</td></tr>
+            <tr><td style="padding:.8rem .4rem;">Sara Khan</td><td style="padding:.8rem .4rem;">sara@example.com</td><td style="padding:.8rem .4rem;">+92 333 7778899</td><td style="padding:.8rem .4rem;">Sell</td><td style="padding:.8rem .4rem;">3 days ago</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script src="assets/js/main.js"></script>
+</body>
+</html>
