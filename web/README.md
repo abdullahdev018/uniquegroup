@@ -13,15 +13,31 @@ A modern luxury real estate website for **Unique Properties**, specializing in P
 
 ## Run
 
-Open `index.html` directly in your browser. No build step. No server required.
-
-To preview locally with a quick HTTP server:
+Properties are stored by a small backend, so start the included server:
 
 ```bash
 cd web
-python3 -m http.server 8080
+python3 server.py
 # then open http://localhost:8080
 ```
+
+`server.py` (pure Python standard library — no installs) serves the static
+site **and** a JSON API:
+
+| Method | Route | Purpose |
+|---|---|---|
+| GET | `/api/properties` | list all properties (newest first) |
+| POST | `/api/properties` | create one |
+| PUT | `/api/properties/<id>` | update |
+| DELETE | `/api/properties/<id>` | delete |
+
+The admin panel (`admin.html`) writes to this API, and the public
+`properties.html` / home page read from it. Data is persisted to
+`web/data/db.json` (created automatically, git-ignored).
+
+> The static pages still open without the server, but the Properties listing
+> and admin Properties tab need `server.py` running. (Blog posts and Settings
+> are still stored per-browser in `localStorage`.)
 
 ## Stack
 

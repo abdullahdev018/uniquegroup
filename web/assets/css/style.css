@@ -1219,3 +1219,200 @@ section.section {
 .empty-actions {
   display: flex; gap: 0.7rem; justify-content: center; flex-wrap: wrap;
 }
+
+/* ===================================================
+   Admin v2 — top nav, mobile sidebar drawer,
+   tablet/desktop bottom nav, action sheets, CRUD lists
+   =================================================== */
+.admin-shell { min-height: 100vh; background: var(--soft); }
+
+/* ---- Top nav bar (all sizes) ---- */
+.admin-topbar {
+  position: sticky; top: 0; z-index: 60;
+  display: flex; align-items: center; gap: 0.9rem;
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  padding: 0.85rem 1.2rem;
+}
+.admin-topbar .menu-btn {
+  display: none;
+  width: 42px; height: 42px; flex-shrink: 0;
+  align-items: center; justify-content: center;
+  border: none; border-radius: 0.6rem;
+  background: var(--soft); color: var(--navy);
+  font-size: 1.1rem; cursor: pointer;
+}
+.admin-topbar .tb-brand {
+  display: flex; align-items: center; gap: 0.55rem;
+  font-family: 'Poppins', sans-serif; font-weight: 600; color: var(--navy);
+}
+.admin-topbar .tb-brand img { width: 30px; height: 30px; }
+.admin-topbar .tb-divider { width: 1px; height: 26px; background: var(--border); }
+.admin-topbar .page-title {
+  font-family: 'Poppins', sans-serif; font-weight: 600;
+  font-size: 1.05rem; color: var(--navy);
+}
+.admin-topbar .tb-spacer { flex: 1; }
+
+/* ---- Main content area ---- */
+.admin-content { padding: 1.7rem 1.4rem 8rem; max-width: 1100px; margin: 0 auto; }
+
+/* ---- Overlay (drawer + sheets) ---- */
+.admin-overlay {
+  position: fixed; inset: 0; background: rgba(15,23,42,0.45);
+  opacity: 0; visibility: hidden; transition: opacity .3s; z-index: 80;
+}
+.admin-overlay.show { opacity: 1; visibility: visible; }
+
+/* ---- Mobile sidebar drawer ---- */
+.admin-drawer {
+  position: fixed; top: 0; left: 0; bottom: 0;
+  width: 278px; max-width: 82vw;
+  background: var(--navy); color: rgba(255,255,255,0.85);
+  padding: 1.5rem 1.15rem 1.8rem; z-index: 90;
+  border-radius: 0 1.3rem 1.3rem 0;
+  transform: translateX(-102%);
+  transition: transform .32s cubic-bezier(.4,0,.2,1);
+  overflow-y: auto;
+}
+.admin-drawer.open {
+  transform: translateX(0);
+  /* lift the drawer off the page so its edge doesn't merge into the content */
+  box-shadow: 16px 0 50px rgba(15,23,42,0.45);
+}
+.admin-drawer .drawer-head {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 0.6rem; margin-bottom: 1.6rem;
+  padding-bottom: 1.2rem; border-bottom: 1px solid rgba(255,255,255,0.10);
+}
+.admin-drawer .drawer-head .brand { color: var(--white); margin: 0; }
+.admin-drawer .drawer-close {
+  width: 36px; height: 36px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  border: none; border-radius: 0.6rem; cursor: pointer;
+  background: rgba(255,255,255,0.08); color: var(--white); font-size: 1rem;
+  transition: background .2s;
+}
+.admin-drawer .drawer-close:hover { background: rgba(255,255,255,0.16); }
+.admin-drawer .admin-nav a { margin: 0 0.1rem; }
+
+/* ---- Tablet / desktop bottom nav ---- */
+.admin-bottomnav { display: none; }
+@media (min-width: 769px) {
+  .admin-bottomnav {
+    position: fixed; left: 50%; bottom: 1.1rem; transform: translateX(-50%);
+    display: flex; align-items: center; gap: 0.25rem;
+    background: var(--white); border: 1px solid var(--border);
+    box-shadow: var(--shadow-lg);
+    padding: 0.5rem 0.7rem; border-radius: 999px; z-index: 70;
+  }
+  .admin-bottomnav .bn-item {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 3px; min-width: 74px; padding: 0.45rem 0.7rem;
+    border: none; background: none; border-radius: 999px; cursor: pointer;
+    color: var(--muted); font-family: inherit; font-size: 0.72rem; font-weight: 600;
+    transition: color .2s, background .2s;
+  }
+  .admin-bottomnav .bn-item i { font-size: 1.05rem; }
+  .admin-bottomnav .bn-item:hover { color: var(--navy); }
+  .admin-bottomnav .bn-item.active { color: var(--gold); background: rgba(201,162,39,0.10); }
+  .admin-bottomnav .bn-fab {
+    min-width: 0; width: 54px; height: 54px; border-radius: 50%;
+    background: var(--gold); color: var(--white); font-size: 1.3rem;
+    box-shadow: 0 8px 20px rgba(201,162,39,0.45);
+    transform: translateY(-12px);
+  }
+  .admin-bottomnav .bn-fab:hover { background: var(--gold-dark); color: var(--white); }
+}
+
+/* ---- Action sheets (Add / More) ---- */
+.action-sheet {
+  position: fixed; left: 50%; bottom: 0; transform: translate(-50%, 130%);
+  width: min(440px, 94vw); background: var(--white);
+  border-radius: 1.2rem 1.2rem 0 0; padding: 1.3rem 1.3rem 1.8rem;
+  box-shadow: var(--shadow-lg); z-index: 95;
+  transition: transform .32s cubic-bezier(.4,0,.2,1);
+}
+.action-sheet.open { transform: translate(-50%, 0); }
+.action-sheet .sheet-grip {
+  width: 42px; height: 4px; border-radius: 999px;
+  background: var(--border); margin: 0 auto 1.1rem;
+}
+.action-sheet h4 {
+  font-family: 'Poppins', sans-serif; font-size: 1rem;
+  color: var(--navy); margin-bottom: 0.9rem; text-align: center;
+}
+.sheet-btn {
+  display: flex; align-items: center; gap: 0.9rem; width: 100%;
+  padding: 0.9rem 1rem; border: 1px solid var(--border); border-radius: 0.8rem;
+  background: var(--white); color: var(--text);
+  font-family: inherit; font-size: 0.96rem; font-weight: 600;
+  cursor: pointer; margin-bottom: 0.6rem; text-align: left;
+  transition: background .2s, border-color .2s;
+}
+.sheet-btn:last-child { margin-bottom: 0; }
+.sheet-btn:hover { background: var(--soft); border-color: var(--gold); }
+.sheet-btn .ic {
+  width: 40px; height: 40px; border-radius: 0.6rem; flex-shrink: 0;
+  background: rgba(201,162,39,0.12); color: var(--gold);
+  display: flex; align-items: center; justify-content: center;
+}
+.sheet-btn small { display: block; font-weight: 400; color: var(--muted); font-size: 0.8rem; }
+
+/* ---- Panel header with action ---- */
+.panel-head {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 1rem; margin-bottom: 1.3rem; flex-wrap: wrap;
+}
+.panel-head h2 { margin: 0; font-size: 1.25rem; }
+.panel-head p { margin: 0.2rem 0 0; color: var(--muted); font-size: 0.9rem; }
+
+/* ---- Manage list (properties / blogs) ---- */
+.admin-list { display: flex; flex-direction: column; gap: 0.8rem; }
+.admin-row {
+  display: flex; align-items: center; gap: 1rem;
+  background: var(--white); border: 1px solid var(--border);
+  border-radius: 1rem; padding: 0.8rem;
+}
+.admin-row .thumb {
+  width: 88px; height: 66px; border-radius: 0.7rem;
+  object-fit: cover; flex-shrink: 0; background: var(--soft);
+}
+.admin-row .row-main { flex: 1; min-width: 0; }
+.admin-row .row-title {
+  font-family: 'Poppins', sans-serif; font-weight: 600;
+  color: var(--navy); font-size: 0.98rem; margin-bottom: 0.25rem;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.admin-row .row-sub {
+  color: var(--muted); font-size: 0.84rem;
+  display: flex; gap: 0.7rem; flex-wrap: wrap; align-items: center;
+}
+.admin-row .row-actions { display: flex; gap: 0.4rem; flex-shrink: 0; }
+.pill {
+  font-size: 0.7rem; font-weight: 600; padding: 0.2rem 0.6rem;
+  border-radius: 999px; background: rgba(201,162,39,0.15); color: #8a6d1f;
+  text-transform: uppercase; letter-spacing: 0.04em;
+}
+.icon-btn {
+  width: 38px; height: 38px; border-radius: 0.6rem; flex-shrink: 0;
+  border: 1px solid var(--border); background: var(--white); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--navy); transition: background .2s, color .2s, border-color .2s;
+}
+.icon-btn:hover { background: var(--soft); }
+.icon-btn.danger:hover { background: #fde8e8; color: #c0392b; border-color: #f3c2c2; }
+.list-empty { text-align: center; color: var(--muted); padding: 2.5rem 1rem; }
+
+@media (max-width: 768px) {
+  .admin-topbar .menu-btn { display: flex; }
+  .admin-topbar .tb-brand,
+  .admin-topbar .tb-divider { display: none; }
+  .admin-content { padding: 1.1rem 0.85rem 2.5rem; }
+  .admin-topbar .tb-action .lbl { display: none; }
+  .admin-panel { padding: 1.2rem 1rem; }
+  .admin-row { padding: 0.65rem; gap: 0.7rem; }
+  .admin-row .thumb { width: 60px; height: 50px; }
+  .admin-row .row-actions { gap: 0.35rem; }
+  .icon-btn { width: 36px; height: 36px; }
+}
