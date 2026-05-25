@@ -13,7 +13,14 @@ A modern luxury real estate website for **Unique Properties**, specializing in P
 
 ## Run
 
-Properties are stored by a small backend, so start the included server:
+Properties are stored by a small backend, so the server **must be running** —
+opening `admin.html` as a file (or with the server off) is why the panel looks
+broken and listings stay empty.
+
+**Easiest (macOS):** double-click **`web/start.command`**. It launches the
+server and opens the site in your browser automatically.
+
+**Or from a terminal:**
 
 ```bash
 cd web
