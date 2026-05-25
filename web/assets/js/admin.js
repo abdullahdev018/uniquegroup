@@ -103,7 +103,7 @@
   }
 
   // ---------- localStorage (settings only) ----------
-  const KEYS = { settings: 'up_settings_v2' };
+  const KEYS = { settings: 'up_settings_v3' };
   const LS = {
     get(key, fallback) {
       try { const v = JSON.parse(localStorage.getItem(key)); return v == null ? fallback : v; }
@@ -111,7 +111,7 @@
     },
     set(key, val) { localStorage.setItem(key, JSON.stringify(val)); },
   };
-  const DEFAULT_SETTINGS = { whatsapp: '923008499644', phone: '+92 300 8499644', email: 'info@uniqueproperties.pk' };
+  const DEFAULT_SETTINGS = { whatsapp: '928499644', phone: '+92 300 8499644', email: 'info@uniqueproperties.pk' };
   const INQUIRIES = [
     { name: 'Ali Raza', property: 'Modern 1 Kanal Villa', msg: "Assalam o Alaikum, I'm interested in the 1 Kanal villa. Is it still available for viewing this weekend?", initials: 'AR', color: '#C9A227' },
     { name: 'Fatima Hassan', property: 'Sky Garden Penthouse', msg: 'Hello, could you share the payment plan and possession timeline for the penthouse? Investing from the UK.', initials: 'FH', color: '#10B981' },
@@ -133,7 +133,7 @@
     return 'PKR ' + n.toLocaleString('en-PK');
   }
   const toast = msg => (typeof showToast === 'function') ? showToast(msg) : null;
-  const waNumber = () => (LS.get(KEYS.settings, DEFAULT_SETTINGS).whatsapp || '923008499644').replace(/\D/g, '');
+  const waNumber = () => (LS.get(KEYS.settings, DEFAULT_SETTINGS).whatsapp || '928499644').replace(/\D/g, '');
   const waUrl = name => `https://wa.me/${waNumber()}?text=${encodeURIComponent(`Hi ${name}, thanks for contacting Unique Properties.`)}`;
 
   // ---------- Panels / navigation ----------

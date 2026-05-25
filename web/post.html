@@ -122,8 +122,8 @@
         + `<a class="btn btn-gold" href="properties.html"><i class="fa-solid fa-building"></i> View Properties</a></div>`;
 
       // Wire the injected WhatsApp button (added after main.js already ran)
-      let waNum = '923008499644';
-      try { waNum = (JSON.parse(localStorage.getItem('up_settings')) || {}).whatsapp || waNum; } catch (e) {}
+      let waNum = '928499644';
+      try { waNum = (JSON.parse(localStorage.getItem('up_settings_v3')) || {}).whatsapp || waNum; } catch (e) {}
       const waUrl = `https://wa.me/${String(waNum).replace(/\D/g, '')}?text=${encodeURIComponent("Hi Unique Properties, I'm interested in a property in Park View Lahore.")}`;
       wrap.querySelectorAll('[data-whatsapp]').forEach(el => { el.href = waUrl; el.target = '_blank'; el.rel = 'noopener'; });
     };

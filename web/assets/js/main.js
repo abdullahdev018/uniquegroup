@@ -5,10 +5,10 @@
 // ----- Config (swap these per deployment) -----
 // Admin → Settings can override this; falls back to the default below.
 const STORED_SETTINGS = (() => {
-  try { return JSON.parse(localStorage.getItem('up_settings_v2')) || {}; }
+  try { return JSON.parse(localStorage.getItem('up_settings_v3')) || {}; }
   catch { return {}; }
 })();
-const WHATSAPP_NUMBER = STORED_SETTINGS.whatsapp || '923008499644'; // default contact number
+const WHATSAPP_NUMBER = STORED_SETTINGS.whatsapp || '928499644'; // default WhatsApp number
 const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent("Hi Unique Properties, I'm interested in a property in Park View Lahore.")}`;
 
 // ----- Navbar scroll shadow -----
