@@ -13,3 +13,8 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Web backend runtime data + Python cache
+web/data/
+__pycache__/
+*.pyc

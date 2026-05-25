@@ -3,7 +3,12 @@
    ============================================ */
 
 // ----- Config (swap these per deployment) -----
-const WHATSAPP_NUMBER = '923001234567'; // placeholder
+// Admin → Settings can override this; falls back to the default below.
+const STORED_SETTINGS = (() => {
+  try { return JSON.parse(localStorage.getItem('up_settings')) || {}; }
+  catch { return {}; }
+})();
+const WHATSAPP_NUMBER = STORED_SETTINGS.whatsapp || '923001234567'; // placeholder
 const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent("Hi Unique Properties, I'm interested in a property in Park View Lahore.")}`;
 
 // ----- Navbar scroll shadow -----
@@ -60,9 +65,70 @@ document.querySelectorAll('form[data-mock]').forEach(form => {
   });
 });
 
-// ----- Property filtering (properties.html) -----
-const filterForm = document.querySelector('[data-filter-form]');
-if (filterForm) {
+// ============================================================
+//  Listings rendering
+//  Properties come from the backend API (/api/properties).
+//  Blogs are still client-side (localStorage) — see admin Settings.
+// ============================================================
+const FEED_PLACEHOLDER = 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=800&q=80';
+const _esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const _priceWords = n => {
+  n = Number(n) || 0;
+  if (n >= 1e7) { const v = n / 1e7; return (Number.isInteger(v) ? v : +v.toFixed(2)) + ' Crore'; }
+  if (n >= 1e5) { const v = n / 1e5; return (Number.isInteger(v) ? v : +v.toFixed(2)) + ' Lakh'; }
+  return 'PKR ' + n.toLocaleString();
+};
+const PROP_BLOCKS = ['Rose', 'Tulip', 'Jasmine', 'Iris', 'Boulevard'];
+
+function propertyCardHTML(p) {
+  const type = String(p.type || '').toLowerCase();
+  const block = PROP_BLOCKS.find(b => (p.location || '').toLowerCase().includes(b.toLowerCase())) || '';
+  const cat = type === 'commercial' ? 'commercial' : 'residential';
+  const badge = (p.status && p.status !== 'Active') ? p.status : 'New';
+  const tel = '+' + WHATSAPP_NUMBER;
+  return `<article class="property-card" data-property data-title="${_esc(p.title)}" data-block="${_esc(block)}" data-type="${_esc(type)}" data-size="" data-category="${cat}" data-price="${Number(p.price) || 0}" data-tags="">
+      <div class="property-img-wrap"><span class="property-badge">${_esc(badge)}</span>
+        <img src="${_esc(p.image) || FEED_PLACEHOLDER}" alt="${_esc(p.title)}" loading="lazy" onerror="this.src='${FEED_PLACEHOLDER}'" /></div>
+      <div class="property-body">
+        <div class="property-price">${_esc(_priceWords(p.price))}</div>
+        <h3 class="property-title">${_esc(p.title)}</h3>
+        <div class="property-location"><i class="fa-solid fa-location-dot"></i> ${_esc(p.location)}</div>
+        <div class="property-meta">
+          <span><i class="fa-solid fa-tag"></i> ${_esc(p.type || 'Property')}</span>
+          <span><i class="fa-solid fa-circle-check"></i> ${_esc(p.status || 'Active')}</span>
+        </div>
+        <div class="property-actions">
+          <a href="property-details.html" class="btn btn-navy"><i class="fa-solid fa-arrow-right"></i> View Details</a>
+          <a href="tel:${_esc(tel)}" class="btn btn-gold"><i class="fa-solid fa-phone"></i> Call</a>
+        </div>
+      </div></article>`;
+}
+
+// ----- Blog feed (client-side localStorage; demo seeds b1-b3 already hardcoded) -----
+(function injectBlogs() {
+  const blogFeeds = document.querySelectorAll('[data-blog-feed]');
+  if (!blogFeeds.length) return;
+  let blogs = [];
+  try { blogs = (JSON.parse(localStorage.getItem('up_blogs')) || []).filter(b => !['b1', 'b2', 'b3'].includes(b.id)); } catch (e) {}
+  blogFeeds.forEach(feed => {
+    feed.insertAdjacentHTML('afterbegin', blogs.map(b => {
+      const url = 'post.html?id=' + encodeURIComponent(b.id);
+      return `<article class="blog-card">
+          <a href="${url}" class="img-wrap"><img src="${_esc(b.cover) || FEED_PLACEHOLDER}" alt="${_esc(b.title)}" loading="lazy" onerror="this.src='${FEED_PLACEHOLDER}'" /></a>
+          <div class="body">
+            <div class="meta"><span class="cat">${_esc(b.category || 'News')}</span><span><i class="fa-regular fa-calendar"></i> ${_esc(b.date || '')}</span></div>
+            <h3><a href="${url}">${_esc(b.title)}</a></h3>
+            <p class="excerpt">${_esc(b.excerpt || '')}</p>
+            <a href="${url}" class="read-more">Read article <i class="fa-solid fa-arrow-right"></i></a>
+          </div></article>`;
+    }).join(''));
+  });
+})();
+
+// ----- Property filtering (properties.html) — enabled after cards are rendered -----
+function setupPropertyFilter() {
+  const filterForm = document.querySelector('[data-filter-form]');
+  if (!filterForm) return;
   const cards = Array.from(document.querySelectorAll('[data-property]'));
   const chips = Array.from(document.querySelectorAll('[data-quick-chips] .chip'));
   const countEl = document.querySelector('[data-count]');
@@ -172,19 +238,25 @@ if (filterForm) {
   apply();
 }
 
-// ----- Admin sidebar nav (admin.html) -----
-const adminPanels = document.querySelectorAll('[data-admin-panel]');
-const adminLinks = document.querySelectorAll('[data-admin-link]');
-if (adminLinks.length) {
-  adminLinks.forEach(link => {
-    link.addEventListener('click', e => {
-      e.preventDefault();
-      const target = link.dataset.adminLink;
-      adminLinks.forEach(l => l.classList.toggle('active', l === link));
-      adminPanels.forEach(p => p.style.display = p.dataset.adminPanel === target ? '' : 'none');
-    });
-  });
-}
+// ----- Load properties from the backend API, render into feeds, then filter -----
+(function loadProperties() {
+  const propFeeds = document.querySelectorAll('[data-property-feed]');
+  if (!propFeeds.length) { setupPropertyFilter(); return; }
+  fetch('/api/properties')
+    .then(r => (r.ok ? r.json() : []))
+    .then(list => {
+      if (!Array.isArray(list)) list = [];
+      propFeeds.forEach(feed => {
+        const limit = parseInt(feed.dataset.feedLimit || '0', 10);
+        const items = limit ? list.slice(0, limit) : list;
+        if (items.length) feed.insertAdjacentHTML('beforeend', items.map(propertyCardHTML).join(''));
+      });
+    })
+    .catch(() => { /* backend offline — the empty state will show */ })
+    .finally(() => setupPropertyFilter());
+})();
+
+// ----- Admin panel nav is handled in admin.js -----
 
 // ----- AOS init (if loaded) -----
 if (window.AOS) {

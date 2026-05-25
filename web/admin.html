@@ -12,230 +12,315 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
   <link rel="stylesheet" href="assets/css/style.css" />
+  <link rel="stylesheet" href="assets/css/admin.css" />
 </head>
 <body>
 
-<div class="admin-layout">
+<div class="admin-shell">
 
-  <!-- Sidebar -->
-  <aside class="admin-sidebar">
-    <div class="brand"><img class="brand-mark" src="assets/favicon/android-chrome-192x192.png" alt="Unique Properties logo" /><span>Unique Properties</span></div>
-    <ul class="admin-nav">
+  <div class="admin-overlay" data-overlay></div>
+
+  <!-- ============ Fixed sidebar ============ -->
+  <aside class="adm-sidebar" data-drawer>
+    <div class="adm-logo">
+      <img src="assets/favicon/android-chrome-192x192.png" alt="Unique Properties logo" />
+      <span><b>Unique Properties</b><small>Admin</small></span>
+    </div>
+
+    <div class="adm-navlabel">Menu</div>
+    <ul class="adm-nav">
       <li><a href="#" class="active" data-admin-link="dashboard"><i class="fa-solid fa-gauge-high"></i> Dashboard</a></li>
       <li><a href="#" data-admin-link="properties"><i class="fa-solid fa-building"></i> Properties</a></li>
-      <li><a href="#" data-admin-link="add"><i class="fa-solid fa-plus"></i> Add Property</a></li>
+      <li><a href="#" data-admin-link="add"><i class="fa-solid fa-circle-plus"></i> Add Property</a></li>
+      <li><a href="#" data-admin-link="blogs"><i class="fa-solid fa-newspaper"></i> Blog Posts</a></li>
       <li><a href="#" data-admin-link="inquiries"><i class="fa-solid fa-envelope-open-text"></i> Inquiries</a></li>
-      <li style="margin-top:1.5rem;"><a href="index.html"><i class="fa-solid fa-right-from-bracket"></i> Logout</a></li>
+      <li><a href="#" data-admin-link="analytics"><i class="fa-solid fa-chart-line"></i> Analytics</a></li>
+      <li><a href="#" data-admin-link="settings"><i class="fa-solid fa-gear"></i> Settings</a></li>
     </ul>
+
+    <div class="sb-spacer"></div>
+    <a href="index.html" class="adm-logout"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
   </aside>
 
-  <!-- Main -->
-  <main class="admin-main">
-    <div class="admin-header">
-      <div>
-        <h1>Welcome back, Admin</h1>
-        <div style="color:var(--muted);font-size:.92rem;">Here's what's happening today.</div>
-      </div>
-      <a class="btn btn-navy" data-admin-link="add" href="#"><i class="fa-solid fa-plus"></i> Add Property</a>
-    </div>
+  <!-- ============ Main column ============ -->
+  <div class="adm-main">
 
-    <!-- Dashboard panel -->
-    <div data-admin-panel="dashboard">
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-icon"><i class="fa-solid fa-building"></i></div>
-          <div>
-            <div class="stat-value">128</div>
-            <div class="stat-label">Total Properties</div>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon"><i class="fa-solid fa-envelope"></i></div>
-          <div>
-            <div class="stat-value">47</div>
-            <div class="stat-label">Total Inquiries</div>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon"><i class="fa-solid fa-circle-check"></i></div>
-          <div>
-            <div class="stat-value">96</div>
-            <div class="stat-label">Active Listings</div>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon"><i class="fa-solid fa-eye"></i></div>
-          <div>
-            <div class="stat-value">12.4k</div>
-            <div class="stat-label">Page Views (30d)</div>
-          </div>
-        </div>
-      </div>
+    <!-- Top header -->
+    <header class="adm-header">
+      <button class="adm-menu-btn" data-drawer-open aria-label="Open menu"><i class="fa-solid fa-bars"></i></button>
+      <span class="adm-pagetitle" data-page-title>Dashboard</span>
+      <label class="adm-search">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" placeholder="Search properties…" data-admin-search aria-label="Search" />
+      </label>
+      <span class="hdr-spacer"></span>
+      <button class="icon-pill" aria-label="Notifications"><i class="fa-regular fa-bell"></i><span class="dot"></span></button>
+      <div class="adm-avatar" title="Admin">AD</div>
+      <button class="btn-premium" data-add-property><i class="fa-solid fa-plus"></i> <span class="lbl">Add Property</span></button>
+    </header>
 
-      <div class="admin-panel">
-        <h2>Recent Inquiries</h2>
-        <p style="color:var(--muted);margin-bottom:1rem;">Latest inquiries received this week.</p>
-        <table style="width:100%;border-collapse:collapse;font-size:.93rem;">
-          <thead>
-            <tr style="text-align:left;border-bottom:1px solid var(--border);color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-size:.78rem;">
-              <th style="padding:.8rem .4rem;">Name</th>
-              <th style="padding:.8rem .4rem;">Phone</th>
-              <th style="padding:.8rem .4rem;">Property</th>
-              <th style="padding:.8rem .4rem;">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr style="border-bottom:1px solid var(--border);">
-              <td style="padding:.8rem .4rem;">Ali Raza</td>
-              <td style="padding:.8rem .4rem;">+92 300 1112233</td>
-              <td style="padding:.8rem .4rem;">Modern 1 Kanal Villa</td>
-              <td style="padding:.8rem .4rem;"><span style="background:rgba(201,162,39,.15);color:var(--gold);padding:.25rem .6rem;border-radius:999px;font-size:.78rem;font-weight:600;">New</span></td>
-            </tr>
-            <tr style="border-bottom:1px solid var(--border);">
-              <td style="padding:.8rem .4rem;">Fatima Hassan</td>
-              <td style="padding:.8rem .4rem;">+44 7700 900123</td>
-              <td style="padding:.8rem .4rem;">Sky Garden Penthouse</td>
-              <td style="padding:.8rem .4rem;"><span style="background:rgba(37,211,102,.15);color:#25D366;padding:.25rem .6rem;border-radius:999px;font-size:.78rem;font-weight:600;">Contacted</span></td>
-            </tr>
-            <tr>
-              <td style="padding:.8rem .4rem;">Bilal Ahmed</td>
-              <td style="padding:.8rem .4rem;">+92 321 4445566</td>
-              <td style="padding:.8rem .4rem;">Corner 5 Marla Plot</td>
-              <td style="padding:.8rem .4rem;"><span style="background:rgba(15,23,42,.08);color:var(--navy);padding:.25rem .6rem;border-radius:999px;font-size:.78rem;font-weight:600;">Closed</span></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
+    <div class="adm-content">
 
-    <!-- Properties panel -->
-    <div data-admin-panel="properties" style="display:none;">
-      <div class="admin-panel">
-        <h2>All Properties</h2>
-        <p style="color:var(--muted);margin-bottom:1rem;">Manage your listings here. (Demo data)</p>
-        <div class="property-grid" style="grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));">
-          <article class="property-card">
-            <div class="property-img-wrap">
-              <img src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=600&q=80" alt="Property" loading="lazy" />
+      <!-- ===================== DASHBOARD ===================== -->
+      <section data-admin-panel="dashboard" class="adm-section-gap">
+
+        <!-- Hero -->
+        <div class="adm-hero">
+          <div>
+            <h1>Welcome back, Admin 👋</h1>
+            <p>Here's what's happening with Unique Properties today. Your listings are performing well this month.</p>
+          </div>
+          <div class="hero-mini">
+            <div class="mini"><div class="n">+18.2%<span class="up"><i class="fa-solid fa-arrow-trend-up"></i></span></div><div class="l">Growth this month</div></div>
+            <div class="mini"><div class="n">3</div><div class="l">New inquiries today</div></div>
+          </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="adm-stats">
+          <div class="adm-stat">
+            <div class="top">
+              <div class="ic"><i class="fa-solid fa-building"></i></div>
+              <span class="growth"><i class="fa-solid fa-arrow-up"></i> 12.5%</span>
             </div>
-            <div class="property-body">
-              <div class="property-price">PKR 6.5 Cr</div>
-              <h3 class="property-title">Modern 1 Kanal Villa</h3>
-              <div class="property-actions">
-                <a class="btn btn-navy" href="#"><i class="fa-solid fa-pen"></i> Edit</a>
-                <a class="btn btn-gold" href="#"><i class="fa-solid fa-trash"></i> Delete</a>
+            <div class="num" data-stat="properties">0</div>
+            <div class="lbl">Total Properties</div>
+            <svg class="spark" viewBox="0 0 120 36" preserveAspectRatio="none" aria-hidden="true">
+              <defs><linearGradient id="sg1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#C9A227" stop-opacity="0.30"/><stop offset="1" stop-color="#C9A227" stop-opacity="0"/></linearGradient></defs>
+              <path d="M0,28 L15,24 L30,26 L45,16 L60,19 L75,10 L90,14 L105,7 L120,11 L120,36 L0,36 Z" fill="url(#sg1)"/>
+              <polyline points="0,28 15,24 30,26 45,16 60,19 75,10 90,14 105,7 120,11" fill="none" stroke="#C9A227" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+
+          <div class="adm-stat">
+            <div class="top">
+              <div class="ic"><i class="fa-solid fa-newspaper"></i></div>
+              <span class="growth"><i class="fa-solid fa-arrow-up"></i> 8.2%</span>
+            </div>
+            <div class="num" data-stat="blogs">0</div>
+            <div class="lbl">Blog Posts</div>
+            <svg class="spark" viewBox="0 0 120 36" preserveAspectRatio="none" aria-hidden="true">
+              <defs><linearGradient id="sg2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#C9A227" stop-opacity="0.30"/><stop offset="1" stop-color="#C9A227" stop-opacity="0"/></linearGradient></defs>
+              <path d="M0,20 L15,22 L30,15 L45,18 L60,12 L75,16 L90,9 L105,13 L120,8 L120,36 L0,36 Z" fill="url(#sg2)"/>
+              <polyline points="0,20 15,22 30,15 45,18 60,12 75,16 90,9 105,13 120,8" fill="none" stroke="#C9A227" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+
+          <div class="adm-stat">
+            <div class="top">
+              <div class="ic" style="background:rgba(16,185,129,0.12);color:#10B981;"><i class="fa-solid fa-envelope"></i></div>
+              <span class="growth"><i class="fa-solid fa-arrow-up"></i> 23.1%</span>
+            </div>
+            <div class="num">47</div>
+            <div class="lbl">Total Inquiries</div>
+            <svg class="spark" viewBox="0 0 120 36" preserveAspectRatio="none" aria-hidden="true">
+              <defs><linearGradient id="sg3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#10B981" stop-opacity="0.30"/><stop offset="1" stop-color="#10B981" stop-opacity="0"/></linearGradient></defs>
+              <path d="M0,30 L15,26 L30,28 L45,20 L60,22 L75,14 L90,16 L105,9 L120,6 L120,36 L0,36 Z" fill="url(#sg3)"/>
+              <polyline points="0,30 15,26 30,28 45,20 60,22 75,14 90,16 105,9 120,6" fill="none" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+
+          <div class="adm-stat">
+            <div class="top">
+              <div class="ic"><i class="fa-solid fa-users"></i></div>
+              <span class="growth"><i class="fa-solid fa-arrow-up"></i> 5.7%</span>
+            </div>
+            <div class="num">12.4k</div>
+            <div class="lbl">Monthly Visitors</div>
+            <svg class="spark" viewBox="0 0 120 36" preserveAspectRatio="none" aria-hidden="true">
+              <defs><linearGradient id="sg4" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#C9A227" stop-opacity="0.30"/><stop offset="1" stop-color="#C9A227" stop-opacity="0"/></linearGradient></defs>
+              <path d="M0,24 L15,18 L30,21 L45,12 L60,16 L75,11 L90,15 L105,8 L120,12 L120,36 L0,36 Z" fill="url(#sg4)"/>
+              <polyline points="0,24 15,18 30,21 45,12 60,16 75,11 90,15 105,8 120,12" fill="none" stroke="#C9A227" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Lower grid: properties table + recent inquiries -->
+        <div class="adm-grid-2">
+          <div class="surface surface-pad">
+            <div class="card-head">
+              <div>
+                <h2>Recent Properties</h2>
+                <p class="sub">Your latest listings at a glance.</p>
+              </div>
+              <a href="#" class="link-gold" data-admin-link="properties">View all <i class="fa-solid fa-arrow-right"></i></a>
+            </div>
+            <div class="adm-table-wrap">
+              <table class="adm-table">
+                <thead><tr><th>Property</th><th>Price</th><th>Location</th><th>Status</th><th></th></tr></thead>
+                <tbody data-properties-list data-limit="5"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="surface surface-pad">
+            <div class="card-head">
+              <div>
+                <h2>Recent Inquiries</h2>
+                <p class="sub">Latest leads from your site.</p>
+              </div>
+              <a href="#" class="link-gold" data-admin-link="inquiries">All <i class="fa-solid fa-arrow-right"></i></a>
+            </div>
+            <div class="inq-list" data-inquiries></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== PROPERTIES ===================== -->
+      <section data-admin-panel="properties" style="display:none;">
+        <div class="surface surface-pad">
+          <div class="card-head">
+            <div>
+              <h2>All Properties</h2>
+              <p class="sub">Manage your listings — saved on the server.</p>
+            </div>
+            <button class="btn-premium" data-add-property><i class="fa-solid fa-plus"></i> Add Property</button>
+          </div>
+          <div class="adm-table-wrap">
+            <table class="adm-table">
+              <thead><tr><th>Property</th><th>Price</th><th>Location</th><th>Status</th><th></th></tr></thead>
+              <tbody data-properties-list></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== ADD / EDIT PROPERTY ===================== -->
+      <section data-admin-panel="add" style="display:none;">
+        <div class="surface surface-pad">
+          <div class="card-head"><div><h2 data-prop-form-title>Add New Property</h2><p class="sub">Fill the details below to publish a new listing.</p></div></div>
+          <form class="adm-form" data-property-form>
+            <input type="hidden" name="id" />
+            <div class="row-2">
+              <div><label>Title</label><input type="text" name="title" required placeholder="Modern 1 Kanal Villa" /></div>
+              <div><label>Price (PKR)</label><input type="number" name="price" required placeholder="65000000" /></div>
+            </div>
+            <div class="row-2">
+              <div><label>Location / Block</label><input type="text" name="location" required placeholder="Tulip Block, Park View Lahore" /></div>
+              <div><label>Property Type</label>
+                <select name="type"><option>Villa</option><option>House</option><option>Apartment</option><option>Plot</option><option>Commercial</option></select>
               </div>
             </div>
-          </article>
-          <article class="property-card">
-            <div class="property-img-wrap">
-              <img src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=600&q=80" alt="Property" loading="lazy" />
-            </div>
-            <div class="property-body">
-              <div class="property-price">PKR 4.2 Cr</div>
-              <h3 class="property-title">Elegant 10 Marla Home</h3>
-              <div class="property-actions">
-                <a class="btn btn-navy" href="#"><i class="fa-solid fa-pen"></i> Edit</a>
-                <a class="btn btn-gold" href="#"><i class="fa-solid fa-trash"></i> Delete</a>
+            <div class="row-2">
+              <div><label>Status</label>
+                <select name="status"><option>Active</option><option>Pending</option><option>Sold</option></select>
               </div>
+              <div><label>Image URL</label><input type="url" name="image" placeholder="https://images.unsplash.com/..." /></div>
             </div>
-          </article>
-          <article class="property-card">
-            <div class="property-img-wrap">
-              <img src="https://images.unsplash.com/photo-1486325212027-8081e485255e?auto=format&fit=crop&w=600&q=80" alt="Property" loading="lazy" />
+            <div><label>Description</label><textarea name="description" placeholder="Describe the property highlights..."></textarea></div>
+            <div class="actions">
+              <button type="submit" class="btn-premium"><i class="fa-solid fa-cloud-arrow-up"></i> <span data-prop-submit-label>Publish</span></button>
+              <button type="reset" class="btn-ghost2"><i class="fa-solid fa-rotate"></i> Reset</button>
             </div>
-            <div class="property-body">
-              <div class="property-price">PKR 12 Cr</div>
-              <h3 class="property-title">Prime Commercial Plaza</h3>
-              <div class="property-actions">
-                <a class="btn btn-navy" href="#"><i class="fa-solid fa-pen"></i> Edit</a>
-                <a class="btn btn-gold" href="#"><i class="fa-solid fa-trash"></i> Delete</a>
-              </div>
-            </div>
-          </article>
+          </form>
         </div>
-      </div>
-    </div>
+      </section>
 
-    <!-- Add Property panel -->
-    <div data-admin-panel="add" style="display:none;">
-      <div class="admin-panel">
-        <h2>Add New Property</h2>
-        <p style="color:var(--muted);margin-bottom:1.5rem;">Fill the details below to publish a new listing.</p>
-        <form class="form-grid" data-mock data-success="Property added successfully.">
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
-            <div class="form-field">
-              <label>Title</label>
-              <input type="text" name="title" required placeholder="Modern 1 Kanal Villa" />
-            </div>
-            <div class="form-field">
-              <label>Price (PKR)</label>
-              <input type="number" name="price" required placeholder="65000000" />
-            </div>
+      <!-- ===================== BLOG POSTS ===================== -->
+      <section data-admin-panel="blogs" style="display:none;">
+        <div class="surface surface-pad">
+          <div class="card-head">
+            <div><h2>Blog Posts</h2><p class="sub">Manage your articles — saved in your browser.</p></div>
+            <button class="btn-premium" data-add-blog><i class="fa-solid fa-plus"></i> Add Blog</button>
           </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
-            <div class="form-field">
-              <label>Location / Block</label>
-              <input type="text" name="location" required placeholder="Tulip Block, Park View Lahore" />
-            </div>
-            <div class="form-field">
-              <label>Property Type</label>
-              <select name="type">
-                <option>Villa</option>
-                <option>House</option>
-                <option>Apartment</option>
-                <option>Plot</option>
-                <option>Commercial</option>
-              </select>
-            </div>
+          <div class="adm-table-wrap">
+            <table class="adm-table">
+              <thead><tr><th>Article</th><th>Category</th><th>Date</th><th></th></tr></thead>
+              <tbody data-blogs-list></tbody>
+            </table>
           </div>
-          <div class="form-field">
-            <label>Description</label>
-            <textarea name="description" placeholder="Describe the property highlights..."></textarea>
-          </div>
-          <div class="form-field">
-            <label>Images</label>
-            <input type="file" name="images" multiple accept="image/*" />
-          </div>
-          <div style="display:flex;gap:.6rem;">
-            <button type="submit" class="btn btn-navy"><i class="fa-solid fa-cloud-arrow-up"></i> Publish</button>
-            <button type="reset" class="btn btn-ghost" style="background:var(--soft);color:var(--text);border-color:var(--border);"><i class="fa-solid fa-rotate"></i> Reset</button>
-          </div>
-        </form>
-      </div>
-    </div>
+        </div>
+      </section>
 
-    <!-- Inquiries panel -->
-    <div data-admin-panel="inquiries" style="display:none;">
-      <div class="admin-panel">
-        <h2>All Inquiries</h2>
-        <p style="color:var(--muted);margin-bottom:1rem;">Recent inquiries from your website.</p>
-        <table style="width:100%;border-collapse:collapse;font-size:.93rem;">
-          <thead>
-            <tr style="text-align:left;border-bottom:1px solid var(--border);color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-size:.78rem;">
-              <th style="padding:.8rem .4rem;">Name</th>
-              <th style="padding:.8rem .4rem;">Email</th>
-              <th style="padding:.8rem .4rem;">Phone</th>
-              <th style="padding:.8rem .4rem;">Interest</th>
-              <th style="padding:.8rem .4rem;">Date</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr style="border-bottom:1px solid var(--border);"><td style="padding:.8rem .4rem;">Ali Raza</td><td style="padding:.8rem .4rem;">ali@example.com</td><td style="padding:.8rem .4rem;">+92 300 1112233</td><td style="padding:.8rem .4rem;">Buy</td><td style="padding:.8rem .4rem;">Today</td></tr>
-            <tr style="border-bottom:1px solid var(--border);"><td style="padding:.8rem .4rem;">Fatima Hassan</td><td style="padding:.8rem .4rem;">fatima@example.com</td><td style="padding:.8rem .4rem;">+44 7700 900123</td><td style="padding:.8rem .4rem;">Invest</td><td style="padding:.8rem .4rem;">Yesterday</td></tr>
-            <tr style="border-bottom:1px solid var(--border);"><td style="padding:.8rem .4rem;">Bilal Ahmed</td><td style="padding:.8rem .4rem;">bilal@example.com</td><td style="padding:.8rem .4rem;">+92 321 4445566</td><td style="padding:.8rem .4rem;">Buy</td><td style="padding:.8rem .4rem;">2 days ago</td></tr>
-            <tr><td style="padding:.8rem .4rem;">Sara Khan</td><td style="padding:.8rem .4rem;">sara@example.com</td><td style="padding:.8rem .4rem;">+92 333 7778899</td><td style="padding:.8rem .4rem;">Sell</td><td style="padding:.8rem .4rem;">3 days ago</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
+      <!-- ===================== ADD / EDIT BLOG ===================== -->
+      <section data-admin-panel="add-blog" style="display:none;">
+        <div class="surface surface-pad">
+          <div class="card-head"><div><h2 data-blog-form-title>Add Blog Post</h2><p class="sub">Write a new article for the website blog.</p></div></div>
+          <form class="adm-form" data-blog-form>
+            <input type="hidden" name="id" />
+            <div class="row-2">
+              <div><label>Title</label><input type="text" name="title" required placeholder="Best Lahore Properties to Buy in 2026" /></div>
+              <div><label>Category</label>
+                <select name="category"><option>Buying Guide</option><option>Buyer's Checklist</option><option>Market Insights</option><option>News</option><option>Investment</option></select>
+              </div>
+            </div>
+            <div><label>Cover Image URL</label><input type="url" name="cover" placeholder="https://images.unsplash.com/..." /></div>
+            <div><label>Excerpt</label><textarea name="excerpt" style="min-height:80px;" placeholder="A short summary shown on the blog listing..."></textarea></div>
+            <div><label>Content</label><textarea name="content" placeholder="Write the full article here..."></textarea></div>
+            <div class="actions">
+              <button type="submit" class="btn-premium"><i class="fa-solid fa-cloud-arrow-up"></i> <span data-blog-submit-label>Publish Post</span></button>
+              <button type="reset" class="btn-ghost2"><i class="fa-solid fa-rotate"></i> Reset</button>
+            </div>
+          </form>
+        </div>
+      </section>
 
-  </main>
+      <!-- ===================== INQUIRIES ===================== -->
+      <section data-admin-panel="inquiries" style="display:none;">
+        <div class="surface surface-pad">
+          <div class="card-head"><div><h2>All Inquiries</h2><p class="sub">Recent leads from your website forms.</p></div></div>
+          <div class="inq-list" data-inquiries-full></div>
+        </div>
+      </section>
+
+      <!-- ===================== ANALYTICS ===================== -->
+      <section data-admin-panel="analytics" style="display:none;" class="adm-section-gap">
+        <div class="adm-stats">
+          <div class="adm-stat"><div class="top"><div class="ic"><i class="fa-solid fa-eye"></i></div><span class="growth"><i class="fa-solid fa-arrow-up"></i> 5.7%</span></div><div class="num">12.4k</div><div class="lbl">Monthly Visitors</div></div>
+          <div class="adm-stat"><div class="top"><div class="ic" style="background:rgba(16,185,129,0.12);color:#10B981;"><i class="fa-solid fa-clock"></i></div><span class="growth"><i class="fa-solid fa-arrow-up"></i> 3.1%</span></div><div class="num">2m 41s</div><div class="lbl">Avg. Session</div></div>
+          <div class="adm-stat"><div class="top"><div class="ic"><i class="fa-solid fa-arrow-pointer"></i></div><span class="growth down"><i class="fa-solid fa-arrow-down"></i> 1.2%</span></div><div class="num">4.8%</div><div class="lbl">Conversion Rate</div></div>
+          <div class="adm-stat"><div class="top"><div class="ic"><i class="fa-solid fa-handshake"></i></div><span class="growth"><i class="fa-solid fa-arrow-up"></i> 14%</span></div><div class="num">9</div><div class="lbl">Deals Closed</div></div>
+        </div>
+
+        <div class="adm-grid-2">
+          <div class="surface surface-pad">
+            <div class="card-head"><div><h2>Traffic Overview</h2><p class="sub">Visitors over the last 7 months.</p></div></div>
+            <svg class="analytics-chart" viewBox="0 0 560 220" preserveAspectRatio="none" aria-hidden="true">
+              <defs><linearGradient id="ag1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#C9A227" stop-opacity="0.28"/><stop offset="1" stop-color="#C9A227" stop-opacity="0"/></linearGradient></defs>
+              <line x1="0" y1="55" x2="560" y2="55" stroke="#EAECF2"/><line x1="0" y1="110" x2="560" y2="110" stroke="#EAECF2"/><line x1="0" y1="165" x2="560" y2="165" stroke="#EAECF2"/>
+              <path d="M0,170 L93,140 L186,150 L279,95 L372,110 L465,60 L560,40 L560,220 L0,220 Z" fill="url(#ag1)"/>
+              <polyline points="0,170 93,140 186,150 279,95 372,110 465,60 560,40" fill="none" stroke="#C9A227" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <div class="an-legend"><span><i class="k" style="background:#C9A227;"></i> Visitors</span></div>
+          </div>
+
+          <div class="surface surface-pad">
+            <div class="card-head"><div><h2>Inquiries by Source</h2><p class="sub">Where your leads come from.</p></div></div>
+            <svg class="analytics-chart" viewBox="0 0 360 220" preserveAspectRatio="none" aria-hidden="true">
+              <g font-family="Inter" font-size="13" fill="#6B7280">
+                <text x="0" y="28">Website</text><rect x="90" y="16" width="200" height="16" rx="8" fill="#C9A227"/>
+                <text x="0" y="78">WhatsApp</text><rect x="90" y="66" width="150" height="16" rx="8" fill="#10B981"/>
+                <text x="0" y="128">Facebook</text><rect x="90" y="116" width="110" height="16" rx="8" fill="#1c2a45"/>
+                <text x="0" y="178">Instagram</text><rect x="90" y="166" width="80" height="16" rx="8" fill="#9AA3B2"/>
+              </g>
+            </svg>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== SETTINGS ===================== -->
+      <section data-admin-panel="settings" style="display:none;">
+        <div class="surface surface-pad">
+          <div class="card-head"><div><h2>Site Settings</h2><p class="sub">Contact details used across the website — saved in your browser.</p></div></div>
+          <form class="adm-form" data-settings-form>
+            <div><label>WhatsApp Number <small style="color:var(--muted2);font-weight:400;">(digits only, with country code)</small></label><input type="text" name="whatsapp" inputmode="numeric" placeholder="923001234567" /></div>
+            <div class="row-2">
+              <div><label>Phone</label><input type="text" name="phone" placeholder="+92 300 1234567" /></div>
+              <div><label>Email</label><input type="email" name="email" placeholder="info@uniqueproperties.pk" /></div>
+            </div>
+            <div class="actions"><button type="submit" class="btn-premium"><i class="fa-solid fa-floppy-disk"></i> Save Settings</button></div>
+          </form>
+        </div>
+      </section>
+
+    </div>
+  </div>
 </div>
 
 <script src="assets/js/main.js"></script>
+<script src="assets/js/admin.js"></script>
 </body>
 </html>
