@@ -5,10 +5,10 @@
 // ----- Config (swap these per deployment) -----
 // Admin → Settings can override this; falls back to the default below.
 const STORED_SETTINGS = (() => {
-  try { return JSON.parse(localStorage.getItem('up_settings')) || {}; }
+  try { return JSON.parse(localStorage.getItem('up_settings_v2')) || {}; }
   catch { return {}; }
 })();
-const WHATSAPP_NUMBER = STORED_SETTINGS.whatsapp || '923001234567'; // placeholder
+const WHATSAPP_NUMBER = STORED_SETTINGS.whatsapp || '923008499644'; // default contact number
 const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent("Hi Unique Properties, I'm interested in a property in Park View Lahore.")}`;
 
 // ----- Navbar scroll shadow -----
@@ -84,45 +84,58 @@ function propertyCardHTML(p) {
   const type = String(p.type || '').toLowerCase();
   const block = PROP_BLOCKS.find(b => (p.location || '').toLowerCase().includes(b.toLowerCase())) || '';
   const cat = type === 'commercial' ? 'commercial' : 'residential';
-  const badge = (p.status && p.status !== 'Active') ? p.status : 'New';
+  // Badge: sold/pending show the status; otherwise the purpose ("For Sale" / "For Rent") or "New".
+  const badge = (p.status && p.status !== 'Active') ? p.status : (p.purpose || 'New');
   const tel = '+' + WHATSAPP_NUMBER;
-  return `<article class="property-card" data-property data-title="${_esc(p.title)}" data-block="${_esc(block)}" data-type="${_esc(type)}" data-size="" data-category="${cat}" data-price="${Number(p.price) || 0}" data-tags="">
+  const size = (p.area && p.areaUnit) ? `${p.area}-${String(p.areaUnit).toLowerCase().replace(/\s+/g, '')}` : '';
+  const detailsUrl = 'property-details.html?id=' + encodeURIComponent(p.id || '');
+
+  // Build the meta row from whatever details exist; fall back to type so it's never empty.
+  const meta = [];
+  if (p.bedrooms) meta.push(`<span><i class="fa-solid fa-bed"></i> ${_esc(p.bedrooms)} Bed</span>`);
+  if (p.bathrooms) meta.push(`<span><i class="fa-solid fa-bath"></i> ${_esc(p.bathrooms)} Bath</span>`);
+  if (p.area) meta.push(`<span><i class="fa-solid fa-vector-square"></i> ${_esc(p.area)} ${_esc(p.areaUnit || '')}</span>`);
+  if (!meta.length) meta.push(`<span><i class="fa-solid fa-tag"></i> ${_esc(p.type || 'Property')}</span>`);
+
+  return `<article class="property-card" data-property data-title="${_esc(p.title)}" data-block="${_esc(block)}" data-type="${_esc(type)}" data-size="${_esc(size)}" data-category="${cat}" data-price="${Number(p.price) || 0}" data-tags="">
       <div class="property-img-wrap"><span class="property-badge">${_esc(badge)}</span>
         <img src="${_esc(p.image) || FEED_PLACEHOLDER}" alt="${_esc(p.title)}" loading="lazy" onerror="this.src='${FEED_PLACEHOLDER}'" /></div>
       <div class="property-body">
         <div class="property-price">${_esc(_priceWords(p.price))}</div>
         <h3 class="property-title">${_esc(p.title)}</h3>
         <div class="property-location"><i class="fa-solid fa-location-dot"></i> ${_esc(p.location)}</div>
-        <div class="property-meta">
-          <span><i class="fa-solid fa-tag"></i> ${_esc(p.type || 'Property')}</span>
-          <span><i class="fa-solid fa-circle-check"></i> ${_esc(p.status || 'Active')}</span>
-        </div>
+        <div class="property-meta">${meta.join('')}</div>
         <div class="property-actions">
-          <a href="property-details.html" class="btn btn-navy"><i class="fa-solid fa-arrow-right"></i> View Details</a>
+          <a href="${detailsUrl}" class="btn btn-navy"><i class="fa-solid fa-arrow-right"></i> View Details</a>
           <a href="tel:${_esc(tel)}" class="btn btn-gold"><i class="fa-solid fa-phone"></i> Call</a>
         </div>
       </div></article>`;
 }
 
-// ----- Blog feed (client-side localStorage; demo seeds b1-b3 already hardcoded) -----
+// ----- Blog feed (backend API /api/blogs; demo featured posts are hardcoded on blog.html) -----
 (function injectBlogs() {
   const blogFeeds = document.querySelectorAll('[data-blog-feed]');
   if (!blogFeeds.length) return;
-  let blogs = [];
-  try { blogs = (JSON.parse(localStorage.getItem('up_blogs')) || []).filter(b => !['b1', 'b2', 'b3'].includes(b.id)); } catch (e) {}
-  blogFeeds.forEach(feed => {
-    feed.insertAdjacentHTML('afterbegin', blogs.map(b => {
-      const url = 'post.html?id=' + encodeURIComponent(b.id);
-      return `<article class="blog-card">
-          <a href="${url}" class="img-wrap"><img src="${_esc(b.cover) || FEED_PLACEHOLDER}" alt="${_esc(b.title)}" loading="lazy" onerror="this.src='${FEED_PLACEHOLDER}'" /></a>
-          <div class="body">
-            <div class="meta"><span class="cat">${_esc(b.category || 'News')}</span><span><i class="fa-regular fa-calendar"></i> ${_esc(b.date || '')}</span></div>
-            <h3><a href="${url}">${_esc(b.title)}</a></h3>
-            <p class="excerpt">${_esc(b.excerpt || '')}</p>
-            <a href="${url}" class="read-more">Read article <i class="fa-solid fa-arrow-right"></i></a>
-          </div></article>`;
-    }).join(''));
-  });
+  const blogCardHTML = b => {
+    const url = 'post.html?id=' + encodeURIComponent(b.id);
+    return `<article class="blog-card">
+        <a href="${url}" class="img-wrap"><img src="${_esc(b.cover) || FEED_PLACEHOLDER}" alt="${_esc(b.title)}" loading="lazy" onerror="this.src='${FEED_PLACEHOLDER}'" /></a>
+        <div class="body">
+          <div class="meta"><span class="cat">${_esc(b.category || 'News')}</span><span><i class="fa-regular fa-calendar"></i> ${_esc(b.date || '')}</span></div>
+          <h3><a href="${url}">${_esc(b.title)}</a></h3>
+          <p class="excerpt">${_esc(b.excerpt || '')}</p>
+          <a href="${url}" class="read-more">Read article <i class="fa-solid fa-arrow-right"></i></a>
+        </div></article>`;
+  };
+  const blogEmpty = document.querySelector('[data-blog-empty]');
+  const showBlogEmpty = () => { if (blogEmpty) blogEmpty.style.display = ''; };
+  fetch('/api/blogs')
+    .then(r => (r.ok ? r.json() : []))
+    .then(list => {
+      if (!Array.isArray(list) || !list.length) { showBlogEmpty(); return; }
+      blogFeeds.forEach(feed => feed.insertAdjacentHTML('afterbegin', list.map(blogCardHTML).join('')));
+    })
+    .catch(showBlogEmpty);
 })();
 
 // ----- Property filtering (properties.html) — enabled after cards are rendered -----

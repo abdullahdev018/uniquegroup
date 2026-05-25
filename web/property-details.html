@@ -69,40 +69,40 @@
     <!-- Left -->
     <div data-aos="fade-up">
       <span class="eyebrow" style="color:var(--gold);font-weight:600;letter-spacing:.18em;font-size:.8rem;text-transform:uppercase;">Featured Property</span>
-      <h1 style="font-size:clamp(1.8rem,3vw,2.4rem);margin:.4rem 0 .6rem;">Modern 1 Kanal Designer Villa</h1>
+      <h1 style="font-size:clamp(1.8rem,3vw,2.4rem);margin:.4rem 0 .6rem;" data-pd-title>Modern 1 Kanal Designer Villa</h1>
       <div class="property-location" style="font-size:1rem;margin-bottom:1rem;">
-        <i class="fa-solid fa-location-dot"></i> Tulip Block, Park View Lahore
+        <i class="fa-solid fa-location-dot"></i> <span data-pd-location>Tulip Block, Park View Lahore</span>
       </div>
-      <div class="property-price" style="font-size:2rem;">PKR 6.5 Cr</div>
+      <div class="property-price" style="font-size:2rem;" data-pd-price>PKR 6.5 Cr</div>
 
       <div class="fact-grid">
         <div class="fact">
           <i class="fa-solid fa-bed"></i>
           <div class="label">Bedrooms</div>
-          <div class="value">5</div>
+          <div class="value" data-pd-beds>5</div>
         </div>
         <div class="fact">
           <i class="fa-solid fa-bath"></i>
           <div class="label">Bathrooms</div>
-          <div class="value">6</div>
+          <div class="value" data-pd-baths>6</div>
         </div>
         <div class="fact">
           <i class="fa-solid fa-vector-square"></i>
           <div class="label">Area</div>
-          <div class="value">1 Kanal</div>
+          <div class="value" data-pd-area>1 Kanal</div>
         </div>
         <div class="fact">
           <i class="fa-solid fa-warehouse"></i>
           <div class="label">Garage</div>
-          <div class="value">2 Cars</div>
+          <div class="value" data-pd-garage>2 Cars</div>
         </div>
       </div>
 
       <h3 style="margin-top:2rem;">Description</h3>
-      <p style="color:var(--muted);">A premium designer villa nestled in Tulip Block — one of Park View Lahore's most desirable neighbourhoods. Built with imported finishes, smart-home automation and a thoughtful layout for modern family living. South-facing, double-height entrance and a landscaped lawn.</p>
+      <p style="color:var(--muted);" data-pd-description>A premium designer villa nestled in Tulip Block — one of Park View Lahore's most desirable neighbourhoods. Built with imported finishes, smart-home automation and a thoughtful layout for modern family living. South-facing, double-height entrance and a landscaped lawn.</p>
 
-      <h3 style="margin-top:2rem;">Features</h3>
-      <ul class="split-list" style="margin:0;">
+      <h3 style="margin-top:2rem;" data-pd-generic>Features</h3>
+      <ul class="split-list" style="margin:0;" data-pd-generic>
         <li><i class="fa-solid fa-check"></i> Smart home automation (lights, climate, security)</li>
         <li><i class="fa-solid fa-check"></i> Italian marble & imported flooring</li>
         <li><i class="fa-solid fa-check"></i> Designer modular kitchen with island</li>
@@ -121,7 +121,7 @@
     <!-- Right: Inquiry -->
     <aside class="inquiry-card" data-aos="fade-left">
       <h3>Interested in this property?</h3>
-      <div class="price">PKR 6.5 Cr</div>
+      <div class="price" data-pd-price>PKR 6.5 Cr</div>
       <form class="form-grid" data-mock data-success="Inquiry sent! Our agent will contact you within 24 hours.">
         <div class="form-field">
           <label>Your Name</label>
@@ -129,7 +129,7 @@
         </div>
         <div class="form-field">
           <label>Phone</label>
-          <input type="tel" name="phone" required placeholder="+92 300 1234567" />
+          <input type="tel" name="phone" required placeholder="+92 300 8499644" />
         </div>
         <div class="form-field">
           <label>Message</label>
@@ -139,7 +139,7 @@
       </form>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-top:1rem;">
         <a class="btn btn-whatsapp" data-whatsapp><i class="fa-brands fa-whatsapp"></i> WhatsApp</a>
-        <a class="btn btn-gold" href="tel:+923001234567"><i class="fa-solid fa-phone"></i> Call Now</a>
+        <a class="btn btn-gold" href="tel:+923008499644"><i class="fa-solid fa-phone"></i> Call Now</a>
       </div>
     </aside>
 
@@ -174,7 +174,7 @@
         <h4>Contact Info</h4>
         <ul class="footer-contact">
           <li><i class="fa-solid fa-location-dot"></i> <span>Main Boulevard, Park View City, Lahore</span></li>
-          <li><i class="fa-solid fa-phone"></i> <span>+92 300 1234567</span></li>
+          <li><i class="fa-solid fa-phone"></i> <span>+92 300 8499644</span></li>
           <li><i class="fa-solid fa-envelope"></i> <span>info@uniqueproperties.pk</span></li>
           <li><i class="fa-brands fa-whatsapp"></i> <a data-whatsapp>Chat on WhatsApp</a></li>
         </ul>
@@ -189,6 +189,40 @@
 
 <a class="wa-float" data-whatsapp aria-label="Chat on WhatsApp"><i class="fa-brands fa-whatsapp"></i></a>
 
+<script>
+  // Load a specific property by ?id= from the backend API. With no id, the static
+  // demo content above is kept as-is.
+  (function () {
+    const id = new URLSearchParams(location.search).get('id');
+    if (!id) return;
+    const priceWords = n => {
+      n = Number(n) || 0;
+      if (n >= 1e7) { const v = n / 1e7; return 'PKR ' + (Number.isInteger(v) ? v : +v.toFixed(2)) + ' Cr'; }
+      if (n >= 1e5) { const v = n / 1e5; return 'PKR ' + (Number.isInteger(v) ? v : +v.toFixed(2)) + ' Lakh'; }
+      return 'PKR ' + n.toLocaleString();
+    };
+    const setText = (sel, val) => document.querySelectorAll(sel).forEach(el => { el.textContent = val; });
+    fetch('/api/properties/' + encodeURIComponent(id))
+      .then(r => (r.ok ? r.json() : null))
+      .then(p => {
+        if (!p || p.error || !p.id) return; // not found → keep static fallback
+        document.title = (p.title || 'Property') + ' — Unique Properties';
+        setText('[data-pd-title]', p.title || 'Property');
+        setText('[data-pd-location]', p.location || '');
+        setText('[data-pd-price]', priceWords(p.price));
+        setText('[data-pd-beds]', p.bedrooms || '—');
+        setText('[data-pd-baths]', p.bathrooms || '—');
+        setText('[data-pd-area]', p.area ? p.area + ' ' + (p.areaUnit || '') : '—');
+        setText('[data-pd-garage]', p.garage || '—');
+        if (p.description) setText('[data-pd-description]', p.description);
+        // Use the property's photo across the gallery (covers Swiper's looped clones too).
+        if (p.image) document.querySelectorAll('.gallery-swiper img').forEach(im => { im.src = p.image; });
+        // Hide the generic "Features" block — we don't have per-property features.
+        document.querySelectorAll('[data-pd-generic]').forEach(el => { el.style.display = 'none'; });
+      })
+      .catch(() => {});
+  })();
+</script>
 <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 <script src="assets/js/main.js"></script>

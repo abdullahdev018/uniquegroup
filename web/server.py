@@ -21,6 +21,7 @@ No third-party dependencies — pure Python standard library.
 """
 import json
 import os
+import secrets
 import threading
 import time
 import uuid
@@ -33,6 +34,12 @@ DB_PATH = os.path.join(DATA_DIR, "db.json")
 PORT = int(os.environ.get("PORT", "8080"))
 COLLECTIONS = ("properties", "blogs")
 _lock = threading.Lock()
+
+# ---- Admin auth ----
+# Change the password by setting ADMIN_PASSWORD before starting the server:
+#   ADMIN_PASSWORD='your-secret' python3 server.py
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "unique2026")
+_tokens = set()           # valid session tokens (in memory; cleared on restart)
 
 
 def load_db():
@@ -58,13 +65,20 @@ class Handler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=BASE, **kwargs)
 
+    # Send no-cache headers on EVERY response (static files + API) so edits and
+    # cleared listings always show on refresh instead of a stale cached copy.
+    def end_headers(self):
+        self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
+        self.send_header("Pragma", "no-cache")
+        self.send_header("Expires", "0")
+        super().end_headers()
+
     # ---------- response helpers ----------
     def _json(self, obj, status=200):
         body = json.dumps(obj).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json")
         self.send_header("Content-Length", str(len(body)))
-        self.send_header("Cache-Control", "no-store")
         self.end_headers()
         self.wfile.write(body)
 
@@ -114,12 +128,37 @@ class Handler(SimpleHTTPRequestHandler):
             return self.send_error(404)
         self._api("DELETE", parts)
 
+    # ---------- auth helpers ----------
+    def _bearer(self):
+        h = self.headers.get("Authorization", "")
+        return h[7:].strip() if h.startswith("Bearer ") else ""
+
+    def _authed(self):
+        return self._bearer() in _tokens
+
     # ---------- API routing ----------
     def _api(self, method, parts):
+        # Auth endpoints (no collection).
+        if parts and parts[0] == "login":
+            if method != "POST":
+                return self._json({"error": "method not allowed"}, 405)
+            if self._body_json().get("password") == ADMIN_PASSWORD:
+                token = secrets.token_hex(24)
+                _tokens.add(token)
+                return self._json({"token": token})
+            return self._json({"error": "Incorrect password"}, 401)
+        if parts and parts[0] == "logout":
+            _tokens.discard(self._bearer())
+            return self._json({"ok": True})
+
         if not parts or parts[0] not in COLLECTIONS:
             return self._json({"error": "unknown collection"}, 404)
         coll = parts[0]
         item_id = parts[1] if len(parts) > 1 else None
+
+        # GET is public (the site needs to read); writes require a valid admin token.
+        if method in ("POST", "PUT", "DELETE") and not self._authed():
+            return self._json({"error": "unauthorized"}, 401)
 
         with _lock:
             db = load_db()

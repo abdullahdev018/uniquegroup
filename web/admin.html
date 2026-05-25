@@ -19,6 +19,22 @@
 </head>
 <body>
 
+<!-- ============ Login gate ============ -->
+<div class="adm-login" data-login>
+  <form class="adm-login-card" data-login-form>
+    <div class="adm-login-brand">
+      <img src="assets/favicon/android-chrome-192x192.png" alt="Unique Properties logo" />
+      <span><b>Unique Properties</b><small>Admin Panel</small></span>
+    </div>
+    <h2>Sign in</h2>
+    <p class="adm-login-sub">Enter the admin password to continue.</p>
+    <label>Password</label>
+    <input type="password" name="password" placeholder="••••••••" required autocomplete="current-password" autofocus />
+    <div class="adm-login-error" data-login-error></div>
+    <button type="submit" class="btn-premium"><i class="fa-solid fa-right-to-bracket"></i> Sign In</button>
+  </form>
+</div>
+
 <div class="admin-shell">
 
   <div class="admin-overlay" data-overlay></div>
@@ -205,10 +221,46 @@
               </div>
             </div>
             <div class="row-2">
+              <div><label>Purpose</label>
+                <select name="purpose"><option>For Sale</option><option>For Rent</option></select>
+              </div>
               <div><label>Status</label>
                 <select name="status"><option>Active</option><option>Pending</option><option>Sold</option></select>
               </div>
-              <div><label>Image URL</label><input type="url" name="image" placeholder="https://images.unsplash.com/..." /></div>
+            </div>
+            <div class="row-2">
+              <div><label>Bedrooms</label><input type="number" name="bedrooms" min="0" placeholder="5" /></div>
+              <div><label>Bathrooms</label><input type="number" name="bathrooms" min="0" placeholder="6" /></div>
+            </div>
+            <div class="row-2">
+              <div><label>Area</label><input type="number" name="area" min="0" step="any" placeholder="1" /></div>
+              <div><label>Area Unit</label>
+                <select name="areaUnit"><option>Marla</option><option>Kanal</option><option>Sq Ft</option><option>Sq Yd</option><option>Acre</option></select>
+              </div>
+            </div>
+            <div class="row-2">
+              <div><label>Garage (cars)</label><input type="number" name="garage" min="0" placeholder="2" /></div>
+              <div></div>
+            </div>
+            <div>
+              <label>Property Image</label>
+              <div class="img-upload" data-img-picker>
+                <input type="hidden" name="image" data-img-url />
+                <div class="img-drop" data-img-empty>
+                  <div class="ic"><i class="fa-solid fa-camera-retro"></i></div>
+                  <p>Add a property photo</p>
+                  <div class="img-drop-buttons">
+                    <label class="btn-ghost2"><i class="fa-solid fa-camera"></i> Camera
+                      <input type="file" accept="image/*" capture="environment" hidden data-img-camera /></label>
+                    <label class="btn-ghost2"><i class="fa-solid fa-image"></i> Device
+                      <input type="file" accept="image/*" hidden data-img-file /></label>
+                  </div>
+                </div>
+                <div class="img-filled" data-img-filled style="display:none;">
+                  <img data-img-preview alt="Image preview" />
+                  <button type="button" class="img-remove" data-img-remove><i class="fa-solid fa-xmark"></i> Remove</button>
+                </div>
+              </div>
             </div>
             <div><label>Description</label><textarea name="description" placeholder="Describe the property highlights..."></textarea></div>
             <div class="actions">
@@ -247,7 +299,26 @@
                 <select name="category"><option>Buying Guide</option><option>Buyer's Checklist</option><option>Market Insights</option><option>News</option><option>Investment</option></select>
               </div>
             </div>
-            <div><label>Cover Image URL</label><input type="url" name="cover" placeholder="https://images.unsplash.com/..." /></div>
+            <div>
+              <label>Cover Image</label>
+              <div class="img-upload" data-img-picker>
+                <input type="hidden" name="cover" data-img-url />
+                <div class="img-drop" data-img-empty>
+                  <div class="ic"><i class="fa-solid fa-camera-retro"></i></div>
+                  <p>Add a cover photo</p>
+                  <div class="img-drop-buttons">
+                    <label class="btn-ghost2"><i class="fa-solid fa-camera"></i> Camera
+                      <input type="file" accept="image/*" capture="environment" hidden data-img-camera /></label>
+                    <label class="btn-ghost2"><i class="fa-solid fa-image"></i> Device
+                      <input type="file" accept="image/*" hidden data-img-file /></label>
+                  </div>
+                </div>
+                <div class="img-filled" data-img-filled style="display:none;">
+                  <img data-img-preview alt="Cover preview" />
+                  <button type="button" class="img-remove" data-img-remove><i class="fa-solid fa-xmark"></i> Remove</button>
+                </div>
+              </div>
+            </div>
             <div><label>Excerpt</label><textarea name="excerpt" style="min-height:80px;" placeholder="A short summary shown on the blog listing..."></textarea></div>
             <div><label>Content</label><textarea name="content" placeholder="Write the full article here..."></textarea></div>
             <div class="actions">
@@ -306,9 +377,9 @@
         <div class="surface surface-pad">
           <div class="card-head"><div><h2>Site Settings</h2><p class="sub">Contact details used across the website — saved in your browser.</p></div></div>
           <form class="adm-form" data-settings-form>
-            <div><label>WhatsApp Number <small style="color:var(--muted2);font-weight:400;">(digits only, with country code)</small></label><input type="text" name="whatsapp" inputmode="numeric" placeholder="923001234567" /></div>
+            <div><label>WhatsApp Number <small style="color:var(--muted2);font-weight:400;">(digits only, with country code)</small></label><input type="text" name="whatsapp" inputmode="numeric" placeholder="923008499644" /></div>
             <div class="row-2">
-              <div><label>Phone</label><input type="text" name="phone" placeholder="+92 300 1234567" /></div>
+              <div><label>Phone</label><input type="text" name="phone" placeholder="+92 300 8499644" /></div>
               <div><label>Email</label><input type="email" name="email" placeholder="info@uniqueproperties.pk" /></div>
             </div>
             <div class="actions"><button type="submit" class="btn-premium"><i class="fa-solid fa-floppy-disk"></i> Save Settings</button></div>

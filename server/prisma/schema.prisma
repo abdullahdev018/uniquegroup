@@ -1,0 +1,1175 @@
+// ============================================================================
+//  Unique Properties — Production Database Schema (PostgreSQL + Prisma)
+// ============================================================================
+//  Conventions used throughout:
+//   • UUID primary keys, generated DB-side via gen_random_uuid() (pgcrypto / PG13+).
+//     For best index locality at very large scale, switch defaults to uuid(7)
+//     (Prisma 5.14+) — see docs/DATABASE.md.
+//   • Every table has created_at / updated_at (timestamptz). Append-only analytics
+//     tables keep only created_at (rows are immutable).
+//   • Soft delete via nullable deleted_at on content tables (filter in the Prisma
+//     client extension — see docs/DATABASE.md). High-volume event tables are NOT
+//     soft-deleted; they are time-partitioned and archived instead.
+//   • snake_case column / table names via @map / @@map; camelCase in app code.
+//   • Slugs are unique + indexed for SEO-friendly URLs.
+//   • Full-text search (tsvector + GIN) and geolocation (PostGIS) are added via
+//     raw SQL migrations documented in docs/DATABASE.md (Prisma can't express the
+//     generated columns / GiST indexes natively).
+// ============================================================================
+
+generator client {
+  provider        = "prisma-client-js"
+  // fullTextSearch       → enables the `search` filter against to_tsquery (PostgreSQL).
+  // postgresqlExtensions → lets us declare PG extensions below.
+  previewFeatures = ["fullTextSearch", "postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  // pgcrypto → gen_random_uuid(); pg_trgm → fuzzy text; postgis → geo search;
+  // unaccent → accent-insensitive search.
+  extensions = [pgcrypto, pg_trgm, postgis, unaccent]
+}
+
+// ============================================================================
+//  ENUMS
+// ============================================================================
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  PENDING
+
+  @@map("user_status")
+}
+
+enum AdminStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+
+  @@map("admin_status")
+}
+
+/// Whether a property is for sale, for rent, or short-stay.
+enum ListingPurpose {
+  SALE
+  RENT
+  SHORT_STAY
+
+  @@map("listing_purpose")
+}
+
+/// Area units — Marla/Kanal included for the Pakistani market.
+enum AreaUnit {
+  SQFT
+  SQYD
+  SQM
+  MARLA
+  KANAL
+  ACRE
+
+  @@map("area_unit")
+}
+
+enum Currency {
+  PKR
+  USD
+  AED
+  GBP
+  EUR
+
+  @@map("currency")
+}
+
+enum InquiryStatus {
+  NEW
+  CONTACTED
+  IN_PROGRESS
+  CONVERTED
+  CLOSED
+  SPAM
+
+  @@map("inquiry_status")
+}
+
+enum InquirySource {
+  WEBSITE
+  MOBILE_APP
+  PHONE
+  WALK_IN
+  REFERRAL
+  SOCIAL
+  OTHER
+
+  @@map("inquiry_source")
+}
+
+enum VisitStatus {
+  REQUESTED
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+
+  @@map("visit_status")
+}
+
+enum ContactStatus {
+  NEW
+  READ
+  REPLIED
+  ARCHIVED
+
+  @@map("contact_status")
+}
+
+enum CommentStatus {
+  PENDING
+  APPROVED
+  SPAM
+  REJECTED
+
+  @@map("comment_status")
+}
+
+enum BlogStatus {
+  DRAFT
+  PUBLISHED
+  SCHEDULED
+  ARCHIVED
+
+  @@map("blog_status")
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+
+  @@map("review_status")
+}
+
+enum SubscriberStatus {
+  PENDING
+  SUBSCRIBED
+  UNSUBSCRIBED
+  BOUNCED
+
+  @@map("subscriber_status")
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+  DOCUMENT
+  AUDIO
+  OTHER
+
+  @@map("media_type")
+}
+
+enum StorageProvider {
+  LOCAL
+  S3
+  CLOUDINARY
+  GCS
+  AZURE
+
+  @@map("storage_provider")
+}
+
+enum UploadStatus {
+  PENDING
+  UPLOADING
+  COMPLETED
+  FAILED
+
+  @@map("upload_status")
+}
+
+enum BannerPosition {
+  HOME_HERO
+  HOME_MIDDLE
+  SIDEBAR
+  FOOTER
+  POPUP
+
+  @@map("banner_position")
+}
+
+enum SettingType {
+  STRING
+  TEXT
+  NUMBER
+  BOOLEAN
+  JSON
+  IMAGE
+
+  @@map("setting_type")
+}
+
+enum SocialPlatform {
+  FACEBOOK
+  INSTAGRAM
+  TWITTER
+  LINKEDIN
+  YOUTUBE
+  TIKTOK
+  WHATSAPP
+  WEBSITE
+
+  @@map("social_platform")
+}
+
+enum AnalyticsEventType {
+  PAGE_VIEW
+  PROPERTY_VIEW
+  SEARCH
+  INQUIRY
+  FAVORITE
+  SHARE
+  CLICK
+  SIGNUP
+  LOGIN
+  DOWNLOAD
+  CUSTOM
+
+  @@map("analytics_event_type")
+}
+
+// ============================================================================
+//  MODULE 1 — AUTHENTICATION & USERS
+// ============================================================================
+
+/// End-customers of the public site (buyers, renters, subscribers).
+model User {
+  id              String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email           String     @unique
+  passwordHash    String?    @map("password_hash") // null = social/OTP-only account
+  firstName       String?    @map("first_name")
+  lastName        String?    @map("last_name")
+  phone           String?
+  avatarUrl       String?    @map("avatar_url")
+  status          UserStatus @default(ACTIVE)
+  emailVerifiedAt DateTime?  @map("email_verified_at") @db.Timestamptz(6)
+  lastLoginAt     DateTime?  @map("last_login_at") @db.Timestamptz(6)
+  createdAt       DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt       DateTime?  @map("deleted_at") @db.Timestamptz(6)
+
+  sessions       Session[]
+  favorites      Favorite[]
+  recentlyViewed RecentlyViewed[]
+  searchHistory  SearchHistory[]
+  propertyViews  PropertyView[]
+  blogComments   BlogComment[]
+  agentReviews   AgentReview[]
+  inquiries      Inquiry[]
+  visits         PropertyVisit[]
+  agent          Agent? // optional: a user can also be an agent
+
+  @@index([status])
+  @@index([createdAt])
+  @@index([deletedAt])
+  @@map("users")
+}
+
+/// Back-office staff with role-based access (RBAC).
+model Admin {
+  id           String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email        String      @unique
+  passwordHash String      @map("password_hash")
+  name         String
+  avatarUrl    String?     @map("avatar_url")
+  status       AdminStatus @default(ACTIVE)
+  roleId       String      @map("role_id") @db.Uuid
+  lastLoginAt  DateTime?   @map("last_login_at") @db.Timestamptz(6)
+  createdAt    DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt    DateTime?   @map("deleted_at") @db.Timestamptz(6)
+
+  role              Role           @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  sessions          Session[]
+  createdProperties Property[]     @relation("PropertyCreatedBy")
+  mediaUploads      MediaLibrary[]
+  fileUploads       FileUpload[]
+  blogAuthor        BlogAuthor? // optional: link an admin to a public author profile
+
+  @@index([roleId])
+  @@index([status])
+  @@index([deletedAt])
+  @@map("admins")
+}
+
+/// A named set of permissions (e.g. Super Admin, Editor, Agent Manager).
+model Role {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  isSystem    Boolean  @default(false) @map("is_system") // system roles can't be deleted
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  admins      Admin[]
+  permissions RolePermission[]
+
+  @@map("roles")
+}
+
+/// A single capability, grouped by module (e.g. group="property", action="property.delete").
+model Permission {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String // human label, e.g. "Delete properties"
+  slug        String   @unique // machine key, e.g. "property.delete"
+  group       String // module bucket, e.g. "property"
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  roles RolePermission[]
+
+  @@index([group])
+  @@map("permissions")
+}
+
+/// Join table: which permissions each role has.
+model RolePermission {
+  roleId       String   @map("role_id") @db.Uuid
+  permissionId String   @map("permission_id") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@index([permissionId])
+  @@map("role_permissions")
+}
+
+/// Auth sessions / refresh tokens for both users and admins (only one is set).
+model Session {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tokenHash  String    @unique @map("token_hash") // store a hash, never the raw token
+  userId     String?   @map("user_id") @db.Uuid
+  adminId    String?   @map("admin_id") @db.Uuid
+  ipAddress  String?   @map("ip_address") @db.Inet
+  userAgent  String?   @map("user_agent")
+  expiresAt  DateTime  @map("expires_at") @db.Timestamptz(6)
+  revokedAt  DateTime? @map("revoked_at") @db.Timestamptz(6)
+  lastUsedAt DateTime? @map("last_used_at") @db.Timestamptz(6)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user  User?  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  admin Admin? @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([adminId])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+// ============================================================================
+//  MODULE 2 — PROPERTIES
+// ============================================================================
+
+/// Lookup: dwelling type (House, Apartment, Villa, Plot, Commercial…).
+model PropertyType {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String    @unique
+  slug        String    @unique
+  icon        String?
+  description String?
+  sortOrder   Int       @default(0) @map("sort_order")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  properties Property[]
+
+  @@map("property_types")
+}
+
+/// Lookup: high-level category, self-nesting (Residential > Family Homes, Commercial > Offices…).
+model PropertyCategory {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String
+  slug        String    @unique
+  description String?
+  parentId    String?   @map("parent_id") @db.Uuid
+  sortOrder   Int       @default(0) @map("sort_order")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  parent     PropertyCategory?  @relation("CategoryTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children   PropertyCategory[] @relation("CategoryTree")
+  properties Property[]
+
+  @@index([parentId])
+  @@map("property_categories")
+}
+
+/// Lookup: listing status (Available, Under Offer, Sold, Rented…) — configurable + colored.
+model PropertyStatus {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String   @unique
+  slug      String   @unique
+  color     String? // hex for the admin badge
+  isActive  Boolean  @default(true) @map("is_active")
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  properties Property[]
+
+  @@map("property_status")
+}
+
+/// Core listing. searchVector (tsvector) + GIN index added via raw migration (see docs).
+model Property {
+  id              String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  referenceCode   String         @unique @map("reference_code") // e.g. UP-2026-00042
+  title           String
+  slug            String         @unique
+  description     String?
+  purpose         ListingPurpose @default(SALE)
+  price           Decimal        @db.Decimal(14, 2)
+  currency        Currency       @default(PKR)
+  bedrooms        Int?
+  bathrooms       Int?
+  garages         Int?
+  area            Decimal?       @db.Decimal(12, 2)
+  areaUnit        AreaUnit       @default(MARLA) @map("area_unit")
+  yearBuilt       Int?           @map("year_built")
+  isFeatured      Boolean        @default(false) @map("is_featured")
+  isPublished     Boolean        @default(false) @map("is_published")
+  publishedAt     DateTime?      @map("published_at") @db.Timestamptz(6)
+  viewsCount      Int            @default(0) @map("views_count") // denormalized counter
+  favoritesCount  Int            @default(0) @map("favorites_count")
+  metaTitle       String?        @map("meta_title")
+  metaDescription String?        @map("meta_description")
+
+  typeId      String  @map("type_id") @db.Uuid
+  categoryId  String? @map("category_id") @db.Uuid
+  statusId    String  @map("status_id") @db.Uuid
+  agentId     String? @map("agent_id") @db.Uuid
+  createdById String? @map("created_by_id") @db.Uuid
+
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  type           PropertyType      @relation(fields: [typeId], references: [id], onDelete: Restrict)
+  category       PropertyCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  status         PropertyStatus    @relation(fields: [statusId], references: [id], onDelete: Restrict)
+  agent          Agent?            @relation(fields: [agentId], references: [id], onDelete: SetNull)
+  createdBy      Admin?            @relation("PropertyCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  location       PropertyLocation?
+  featured       FeaturedProperty?
+  images         PropertyImage[]
+  features       PropertyFeature[]
+  amenities      PropertyAmenity[]
+  views          PropertyView[]
+  favorites      Favorite[]
+  recentlyViewed RecentlyViewed[]
+  inquiries      Inquiry[]
+  visits         PropertyVisit[]
+
+  @@index([typeId])
+  @@index([categoryId])
+  @@index([statusId])
+  @@index([agentId])
+  @@index([purpose])
+  @@index([price])
+  @@index([isPublished, publishedAt(sort: Desc)])
+  @@index([isFeatured])
+  @@index([createdAt(sort: Desc)])
+  @@index([deletedAt])
+  @@map("properties")
+}
+
+/// 1:1 location row. latitude/longitude kept as Decimal for portability; a PostGIS
+/// geography column + GiST index is added via raw migration for fast radius search.
+model PropertyLocation {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  propertyId   String   @unique @map("property_id") @db.Uuid
+  address      String?
+  neighborhood String?
+  block        String? // Park View "Tulip/Rose…" block
+  city         String   @default("Lahore")
+  state        String?  @default("Punjab")
+  country      String   @default("Pakistan")
+  postalCode   String?  @map("postal_code")
+  latitude     Decimal? @db.Decimal(10, 8)
+  longitude    Decimal? @db.Decimal(11, 8)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([city])
+  @@index([latitude, longitude])
+  @@map("property_locations")
+}
+
+/// Gallery images for a property. One can be flagged as the cover.
+model PropertyImage {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  propertyId   String   @map("property_id") @db.Uuid
+  mediaId      String?  @map("media_id") @db.Uuid
+  url          String
+  thumbnailUrl String?  @map("thumbnail_url")
+  alt          String?
+  caption      String?
+  isCover      Boolean  @default(false) @map("is_cover")
+  sortOrder    Int      @default(0) @map("sort_order")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  property Property      @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  media    MediaLibrary? @relation(fields: [mediaId], references: [id], onDelete: SetNull)
+
+  @@index([propertyId])
+  @@index([mediaId])
+  @@map("property_images")
+}
+
+/// Free-form per-property attributes (e.g. Flooring=Marble, Heating=Central).
+model PropertyFeature {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  propertyId String   @map("property_id") @db.Uuid
+  name       String
+  value      String?
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([propertyId])
+  @@map("property_features")
+}
+
+/// Shared catalog of amenities (Swimming Pool, Gym, Security…), reused across properties.
+model Amenity {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String   @unique
+  slug      String   @unique
+  icon      String?
+  category  String? // grouping label, e.g. "Outdoor", "Security"
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  properties PropertyAmenity[]
+
+  @@map("amenities")
+}
+
+/// Join table: property ⇄ amenity (many-to-many).
+model PropertyAmenity {
+  propertyId String   @map("property_id") @db.Uuid
+  amenityId  String   @map("amenity_id") @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  amenity  Amenity  @relation(fields: [amenityId], references: [id], onDelete: Cascade)
+
+  @@id([propertyId, amenityId])
+  @@index([amenityId])
+  @@map("property_amenities")
+}
+
+/// One row per property view (high volume → partition by created_at; see docs).
+model PropertyView {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  propertyId String   @map("property_id") @db.Uuid
+  userId     String?  @map("user_id") @db.Uuid
+  sessionId  String?  @map("session_id") // anonymous client/session id
+  ipAddress  String?  @map("ip_address") @db.Inet
+  userAgent  String?  @map("user_agent")
+  referrer   String?
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  user     User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([propertyId, createdAt])
+  @@index([userId])
+  @@map("property_views")
+}
+
+/// Curated "featured" placements for the homepage, with optional scheduling.
+model FeaturedProperty {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  propertyId String    @unique @map("property_id") @db.Uuid
+  position   Int       @default(0)
+  isActive   Boolean   @default(true) @map("is_active")
+  startsAt   DateTime? @map("starts_at") @db.Timestamptz(6)
+  endsAt     DateTime? @map("ends_at") @db.Timestamptz(6)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([isActive, position])
+  @@map("featured_properties")
+}
+
+// ============================================================================
+//  MODULE 3 — AGENTS
+// ============================================================================
+
+/// Sales agent / dealer. Denormalized rating + counts for fast cards.
+model Agent {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId        String?   @unique @map("user_id") @db.Uuid
+  firstName     String    @map("first_name")
+  lastName      String    @map("last_name")
+  slug          String    @unique
+  email         String?
+  phone         String?
+  whatsapp      String?
+  photoUrl      String?   @map("photo_url")
+  designation   String? // "Senior Property Consultant"
+  licenseNumber String?   @map("license_number")
+  isActive      Boolean   @default(true) @map("is_active")
+  isVerified    Boolean   @default(false) @map("is_verified")
+  ratingAvg     Decimal   @default(0) @map("rating_avg") @db.Decimal(3, 2)
+  reviewsCount  Int       @default(0) @map("reviews_count")
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt     DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  user        User?             @relation(fields: [userId], references: [id], onDelete: SetNull)
+  profile     AgentProfile?
+  socialLinks AgentSocialLink[]
+  reviews     AgentReview[]
+  properties  Property[]
+  inquiries   Inquiry[]
+  visits      PropertyVisit[]
+
+  @@index([isActive])
+  @@index([deletedAt])
+  @@map("agents")
+}
+
+/// Extended 1:1 agent bio / specialization details.
+model AgentProfile {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agentId         String   @unique @map("agent_id") @db.Uuid
+  bio             String?
+  experienceYears Int?     @map("experience_years")
+  specialization  String?
+  languages       String[] // e.g. {Urdu,English,Punjabi}
+  officeAddress   String?  @map("office_address")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@map("agent_profiles")
+}
+
+model AgentSocialLink {
+  id        String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agentId   String         @map("agent_id") @db.Uuid
+  platform  SocialPlatform
+  url       String
+  createdAt DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@index([agentId])
+  @@map("agent_social_links")
+}
+
+/// Public review of an agent. Moderated via status.
+model AgentReview {
+  id           String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agentId      String       @map("agent_id") @db.Uuid
+  userId       String?      @map("user_id") @db.Uuid
+  reviewerName String?      @map("reviewer_name") // for guests
+  rating       Int // 1..5 (enforce via CHECK in raw migration)
+  comment      String?
+  status       ReviewStatus @default(PENDING)
+  createdAt    DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  user  User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([agentId, status])
+  @@map("agent_reviews")
+}
+
+// ============================================================================
+//  MODULE 4 — BLOG SYSTEM
+// ============================================================================
+
+/// Public author byline. Optionally linked to a back-office admin.
+model BlogAuthor {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  adminId   String?  @unique @map("admin_id") @db.Uuid
+  name      String
+  slug      String   @unique
+  email     String?
+  bio       String?
+  avatarUrl String?  @map("avatar_url")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  admin Admin? @relation(fields: [adminId], references: [id], onDelete: SetNull)
+  blogs Blog[]
+
+  @@map("blog_authors")
+}
+
+/// Self-nesting blog category.
+model BlogCategory {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String
+  slug        String    @unique
+  description String?
+  parentId    String?   @map("parent_id") @db.Uuid
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  parent   BlogCategory?  @relation("BlogCategoryTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children BlogCategory[] @relation("BlogCategoryTree")
+  blogs    Blog[]
+
+  @@index([parentId])
+  @@map("blog_categories")
+}
+
+/// Blog post / article. searchVector (tsvector) + GIN added via raw migration.
+model Blog {
+  id              String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title           String
+  slug            String     @unique
+  excerpt         String?
+  content         String? // markdown / HTML
+  coverImageUrl   String?    @map("cover_image_url")
+  status          BlogStatus @default(DRAFT)
+  readingMinutes  Int?       @map("reading_minutes")
+  viewsCount      Int        @default(0) @map("views_count")
+  isFeatured      Boolean    @default(false) @map("is_featured")
+  publishedAt     DateTime?  @map("published_at") @db.Timestamptz(6)
+  metaTitle       String?    @map("meta_title")
+  metaDescription String?    @map("meta_description")
+
+  categoryId String? @map("category_id") @db.Uuid
+  authorId   String? @map("author_id") @db.Uuid
+
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  category BlogCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  author   BlogAuthor?   @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  tags     BlogPostTag[]
+  comments BlogComment[]
+
+  @@index([categoryId])
+  @@index([authorId])
+  @@index([status, publishedAt(sort: Desc)])
+  @@index([isFeatured])
+  @@index([deletedAt])
+  @@map("blogs")
+}
+
+model BlogTag {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String   @unique
+  slug      String   @unique
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  blogs BlogPostTag[]
+
+  @@map("blog_tags")
+}
+
+/// Join table: blog ⇄ tag.
+model BlogPostTag {
+  blogId    String   @map("blog_id") @db.Uuid
+  tagId     String   @map("tag_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  blog Blog    @relation(fields: [blogId], references: [id], onDelete: Cascade)
+  tag  BlogTag @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([blogId, tagId])
+  @@index([tagId])
+  @@map("blog_post_tags")
+}
+
+/// Threaded blog comment (self-referencing parent), moderated via status.
+model BlogComment {
+  id          String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  blogId      String        @map("blog_id") @db.Uuid
+  userId      String?       @map("user_id") @db.Uuid
+  parentId    String?       @map("parent_id") @db.Uuid
+  authorName  String?       @map("author_name") // for guests
+  authorEmail String?       @map("author_email")
+  content     String
+  status      CommentStatus @default(PENDING)
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  blog    Blog          @relation(fields: [blogId], references: [id], onDelete: Cascade)
+  user    User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  parent  BlogComment?  @relation("CommentThread", fields: [parentId], references: [id], onDelete: Cascade)
+  replies BlogComment[] @relation("CommentThread")
+
+  @@index([blogId, status])
+  @@index([parentId])
+  @@map("blog_comments")
+}
+
+// ============================================================================
+//  MODULE 5 — LEADS & INQUIRIES
+// ============================================================================
+
+/// A lead about a specific property (or general), routed to an agent.
+model Inquiry {
+  id         String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  propertyId String?       @map("property_id") @db.Uuid
+  agentId    String?       @map("agent_id") @db.Uuid
+  userId     String?       @map("user_id") @db.Uuid
+  name       String
+  email      String?
+  phone      String?
+  message    String?
+  status     InquiryStatus @default(NEW)
+  source     InquirySource @default(WEBSITE)
+  createdAt  DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt  DateTime?     @map("deleted_at") @db.Timestamptz(6)
+
+  property Property? @relation(fields: [propertyId], references: [id], onDelete: SetNull)
+  agent    Agent?    @relation(fields: [agentId], references: [id], onDelete: SetNull)
+  user     User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([status])
+  @@index([propertyId])
+  @@index([agentId])
+  @@index([createdAt(sort: Desc)])
+  @@map("inquiries")
+}
+
+/// General "contact us" form submissions (not tied to a property).
+model ContactMessage {
+  id        String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String
+  email     String
+  phone     String?
+  subject   String?
+  message   String
+  status    ContactStatus @default(NEW)
+  createdAt DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime?     @map("deleted_at") @db.Timestamptz(6)
+
+  @@index([status])
+  @@index([createdAt(sort: Desc)])
+  @@map("contact_messages")
+}
+
+/// Scheduled property viewing / site visit.
+model PropertyVisit {
+  id          String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  propertyId  String      @map("property_id") @db.Uuid
+  agentId     String?     @map("agent_id") @db.Uuid
+  userId      String?     @map("user_id") @db.Uuid
+  name        String
+  email       String?
+  phone       String?
+  scheduledAt DateTime    @map("scheduled_at") @db.Timestamptz(6)
+  status      VisitStatus @default(REQUESTED)
+  notes       String?
+  createdAt   DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  agent    Agent?   @relation(fields: [agentId], references: [id], onDelete: SetNull)
+  user     User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([propertyId])
+  @@index([scheduledAt])
+  @@index([status])
+  @@map("property_visits")
+}
+
+model NewsletterSubscriber {
+  id             String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email          String           @unique
+  name           String?
+  status         SubscriberStatus @default(SUBSCRIBED)
+  token          String           @unique @default(dbgenerated("gen_random_uuid()")) @db.Uuid // unsubscribe token
+  subscribedAt   DateTime         @default(now()) @map("subscribed_at") @db.Timestamptz(6)
+  unsubscribedAt DateTime?        @map("unsubscribed_at") @db.Timestamptz(6)
+  createdAt      DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([status])
+  @@map("newsletter_subscribers")
+}
+
+// ============================================================================
+//  MODULE 6 — SETTINGS SYSTEM
+// ============================================================================
+
+/// Key-value site settings (site name, logo, phone, WhatsApp, socials…).
+model GlobalSetting {
+  id        String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  key       String      @unique
+  value     String? // JSON/text serialized per `type`
+  group     String      @default("general") // e.g. general, contact, social
+  label     String?
+  type      SettingType @default(STRING)
+  createdAt DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([group])
+  @@map("global_settings")
+}
+
+/// Per-page / per-entity SEO overrides.
+model SeoSetting {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  pagePath        String   @unique @map("page_path") // e.g. "/", "/properties", "blog:<slug>"
+  metaTitle       String?  @map("meta_title")
+  metaDescription String?  @map("meta_description")
+  metaKeywords    String?  @map("meta_keywords")
+  ogTitle         String?  @map("og_title")
+  ogDescription   String?  @map("og_description")
+  ogImage         String?  @map("og_image")
+  canonicalUrl    String?  @map("canonical_url")
+  robots          String?  @default("index,follow")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("seo_settings")
+}
+
+/// Editable homepage sections (hero, stats, about, CTA…). content is flexible JSON.
+model HomepageSection {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  key       String   @unique // "hero", "stats", "why_us"…
+  title     String?
+  subtitle  String?
+  content   Json?    @db.JsonB
+  isActive  Boolean  @default(true) @map("is_active")
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([isActive, sortOrder])
+  @@map("homepage_sections")
+}
+
+model Banner {
+  id        String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title     String?
+  imageUrl  String         @map("image_url")
+  linkUrl   String?        @map("link_url")
+  position  BannerPosition @default(HOME_HERO)
+  isActive  Boolean        @default(true) @map("is_active")
+  startsAt  DateTime?      @map("starts_at") @db.Timestamptz(6)
+  endsAt    DateTime?      @map("ends_at") @db.Timestamptz(6)
+  sortOrder Int            @default(0) @map("sort_order")
+  createdAt DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([position, isActive, sortOrder])
+  @@map("banners")
+}
+
+model Testimonial {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String
+  role      String? // company / relationship
+  avatarUrl String?  @map("avatar_url")
+  content   String
+  rating    Int      @default(5)
+  isActive  Boolean  @default(true) @map("is_active")
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([isActive, sortOrder])
+  @@map("testimonials")
+}
+
+model Faq {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  question  String
+  answer    String
+  category  String?
+  isActive  Boolean  @default(true) @map("is_active")
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([isActive, sortOrder])
+  @@map("faqs")
+}
+
+// ============================================================================
+//  MODULE 7 — MEDIA SYSTEM
+// ============================================================================
+
+/// Curated, reusable media assets surfaced in the admin media picker.
+model MediaLibrary {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  fileName     String    @map("file_name")
+  originalName String?   @map("original_name")
+  url          String
+  thumbnailUrl String?   @map("thumbnail_url")
+  mimeType     String?   @map("mime_type")
+  type         MediaType @default(IMAGE)
+  sizeBytes    BigInt?   @map("size_bytes")
+  width        Int?
+  height       Int?
+  alt          String?
+  folder       String?   @default("uploads")
+  uploadedById String?   @map("uploaded_by_id") @db.Uuid
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt    DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  uploadedBy     Admin?          @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+  propertyImages PropertyImage[]
+  fileUploads    FileUpload[]
+
+  @@index([type])
+  @@index([folder])
+  @@index([uploadedById])
+  @@index([deletedAt])
+  @@map("media_library")
+}
+
+/// Raw upload audit / job record (chunked uploads, storage provider, checksums).
+model FileUpload {
+  id           String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  mediaId      String?         @map("media_id") @db.Uuid
+  provider     StorageProvider @default(LOCAL)
+  bucket       String?
+  storageKey   String?         @map("storage_key")
+  checksum     String?
+  sizeBytes    BigInt?         @map("size_bytes")
+  status       UploadStatus    @default(PENDING)
+  error        String?
+  uploadedById String?         @map("uploaded_by_id") @db.Uuid
+  createdAt    DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  media      MediaLibrary? @relation(fields: [mediaId], references: [id], onDelete: SetNull)
+  uploadedBy Admin?        @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+
+  @@index([status])
+  @@index([mediaId])
+  @@index([uploadedById])
+  @@map("file_uploads")
+}
+
+// ============================================================================
+//  MODULE 8 — ANALYTICS  (append-only, high volume → time-partition; see docs)
+// ============================================================================
+
+/// Generic event stream (clicks, shares, conversions…). properties = flexible JSONB.
+model AnalyticsEvent {
+  id         String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  eventType  AnalyticsEventType @map("event_type")
+  entityType String?            @map("entity_type") // "property" | "blog" | …
+  entityId   String?            @map("entity_id") @db.Uuid
+  userId     String?            @map("user_id") @db.Uuid
+  sessionId  String?            @map("session_id")
+  properties Json?              @db.JsonB
+  ipAddress  String?            @map("ip_address") @db.Inet
+  userAgent  String?            @map("user_agent")
+  createdAt  DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([eventType, createdAt])
+  @@index([entityType, entityId])
+  @@index([userId])
+  @@map("analytics_events")
+}
+
+/// Page view stream for traffic dashboards.
+model PageView {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  path       String
+  title      String?
+  userId     String?  @map("user_id") @db.Uuid
+  sessionId  String?  @map("session_id")
+  referrer   String?
+  ipAddress  String?  @map("ip_address") @db.Inet
+  userAgent  String?  @map("user_agent")
+  country    String?
+  device     String?
+  durationMs Int?     @map("duration_ms")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([path, createdAt])
+  @@index([createdAt])
+  @@map("page_views")
+}
+
+/// What people search for — powers "popular searches" + saved searches.
+model SearchHistory {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId       String?  @map("user_id") @db.Uuid
+  sessionId    String?  @map("session_id")
+  query        String?
+  filters      Json?    @db.JsonB
+  resultsCount Int?     @map("results_count")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([createdAt(sort: Desc)])
+  @@map("search_history")
+}
+
+// ============================================================================
+//  WISHLIST / FAVORITES & RECENTLY VIEWED
+// ============================================================================
+
+/// A user's saved property (wishlist). Unique per user+property.
+model Favorite {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  propertyId String   @map("property_id") @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, propertyId])
+  @@index([propertyId])
+  @@map("favorites")
+}
+
+/// Recently viewed properties (upsert + bump viewedAt). Unique per user+property.
+model RecentlyViewed {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  propertyId String   @map("property_id") @db.Uuid
+  viewedAt   DateTime @default(now()) @map("viewed_at") @db.Timestamptz(6)
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, propertyId])
+  @@index([userId, viewedAt(sort: Desc)])
+  @@map("recently_viewed")
+}

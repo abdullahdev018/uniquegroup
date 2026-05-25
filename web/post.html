@@ -75,7 +75,7 @@
         <h4>Contact Info</h4>
         <ul class="footer-contact">
           <li><i class="fa-solid fa-location-dot"></i> <span>Main Boulevard, Park View City, Lahore</span></li>
-          <li><i class="fa-solid fa-phone"></i> <span>+92 300 1234567</span></li>
+          <li><i class="fa-solid fa-phone"></i> <span>+92 300 8499644</span></li>
           <li><i class="fa-solid fa-envelope"></i> <span>info@uniqueproperties.pk</span></li>
         </ul>
       </div>
@@ -90,39 +90,49 @@
 <a class="wa-float" data-whatsapp aria-label="Chat on WhatsApp"><i class="fa-brands fa-whatsapp"></i></a>
 
 <script>
-  // Render an admin-added blog post from localStorage by ?id=
+  // Render an admin-added blog post from the backend API (/api/blogs) by ?id=
   (function () {
     const wrap = document.querySelector('[data-post]');
     if (!wrap) return;
     const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     const id = new URLSearchParams(location.search).get('id');
-    let blogs = [];
-    try { blogs = JSON.parse(localStorage.getItem('up_blogs')) || []; } catch (e) {}
-    const post = blogs.find(b => b.id === id);
 
-    if (!post) {
+    const notFound = () => {
       wrap.innerHTML = '<div class="empty-state"><div class="empty-icon"><i class="fa-regular fa-file"></i></div>'
         + '<h3>Article not found</h3><p>This post may have been removed or is no longer available.</p>'
         + '<div class="empty-actions"><a class="btn btn-navy" href="blog.html"><i class="fa-solid fa-arrow-left"></i> Back to Blog</a></div></div>';
       document.title = 'Article not found — Unique Properties';
-      return;
-    }
+    };
 
-    document.title = post.title + ' — Unique Properties';
-    const body = (post.content || post.excerpt || '')
-      .split(/\n\s*\n/).map(p => p.trim()).filter(Boolean)
-      .map(p => `<p>${esc(p).replace(/\n/g, '<br>')}</p>`).join('');
+    const render = post => {
+      document.title = post.title + ' — Unique Properties';
+      const body = (post.content || post.excerpt || '')
+        .split(/\n\s*\n/).map(p => p.trim()).filter(Boolean)
+        .map(p => `<p>${esc(p).replace(/\n/g, '<br>')}</p>`).join('');
 
-    wrap.innerHTML =
-      `<div style="margin-bottom:1.2rem;"><a class="read-more" href="blog.html" style="color:var(--gold);font-weight:600;"><i class="fa-solid fa-arrow-left"></i> Back to Blog</a></div>`
-      + `<div class="article-meta"><span class="cat">${esc(post.category || 'News')}</span><span><i class="fa-regular fa-calendar"></i> ${esc(post.date || '')}</span></div>`
-      + `<h1>${esc(post.title)}</h1>`
-      + (post.cover ? `<img class="article-cover" src="${esc(post.cover)}" alt="${esc(post.title)}" />` : '')
-      + (post.excerpt ? `<p class="lead">${esc(post.excerpt)}</p>` : '')
-      + body
-      + `<div class="article-cta"><h3>Interested in Park View Lahore?</h3><p>Talk to our team about available properties.</p>`
-      + `<a class="btn btn-whatsapp" data-whatsapp><i class="fa-brands fa-whatsapp"></i> Chat on WhatsApp</a> `
-      + `<a class="btn btn-gold" href="properties.html"><i class="fa-solid fa-building"></i> View Properties</a></div>`;
+      wrap.innerHTML =
+        `<div style="margin-bottom:1.2rem;"><a class="read-more" href="blog.html" style="color:var(--gold);font-weight:600;"><i class="fa-solid fa-arrow-left"></i> Back to Blog</a></div>`
+        + `<div class="article-meta"><span class="cat">${esc(post.category || 'News')}</span><span><i class="fa-regular fa-calendar"></i> ${esc(post.date || '')}</span></div>`
+        + `<h1>${esc(post.title)}</h1>`
+        + (post.cover ? `<img class="article-cover" src="${esc(post.cover)}" alt="${esc(post.title)}" />` : '')
+        + (post.excerpt ? `<p class="lead">${esc(post.excerpt)}</p>` : '')
+        + body
+        + `<div class="article-cta"><h3>Interested in Park View Lahore?</h3><p>Talk to our team about available properties.</p>`
+        + `<a class="btn btn-whatsapp" data-whatsapp><i class="fa-brands fa-whatsapp"></i> Chat on WhatsApp</a> `
+        + `<a class="btn btn-gold" href="properties.html"><i class="fa-solid fa-building"></i> View Properties</a></div>`;
+
+      // Wire the injected WhatsApp button (added after main.js already ran)
+      let waNum = '923008499644';
+      try { waNum = (JSON.parse(localStorage.getItem('up_settings')) || {}).whatsapp || waNum; } catch (e) {}
+      const waUrl = `https://wa.me/${String(waNum).replace(/\D/g, '')}?text=${encodeURIComponent("Hi Unique Properties, I'm interested in a property in Park View Lahore.")}`;
+      wrap.querySelectorAll('[data-whatsapp]').forEach(el => { el.href = waUrl; el.target = '_blank'; el.rel = 'noopener'; });
+    };
+
+    if (!id) { notFound(); return; }
+    fetch('/api/blogs/' + encodeURIComponent(id))
+      .then(r => (r.ok ? r.json() : null))
+      .then(post => { (post && post.id && !post.error) ? render(post) : notFound(); })
+      .catch(notFound);
   })();
 </script>
 <script src="assets/js/main.js"></script>
